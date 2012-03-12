@@ -15,10 +15,10 @@
 
 (defvar restclient-within-call nil)
 
-;; The following disables the interactive request for user name and
-;; password should an API call encounter a permission-denied response.
-;; This API is meant to be usable without constant asking for username
-;; and password.
+; The following disables the interactive request for user name and
+; password should an API call encounter a permission-denied response.
+; This API is meant to be usable without constant asking for username
+; and password.
 (defadvice url-http-handle-authentication (around restclient-fix)
   (if restclient-within-call
 	  (setq success t)
@@ -26,7 +26,7 @@
   (setq restclient-within-call nil))
 (ad-activate 'url-http-handle-authentication)
 
-(defun restclient-http-do (method url headers entity)
+(defun restclient-http-do (method url headers entity raw)
   "Send ARGS to URL as a POST request."
   (let* ((url-request-method method)
 		(url-request-extra-headers headers)
@@ -35,31 +35,24 @@
 	(url-retrieve url 'restclient-http-handle-response
 				  (list (if restclient-same-buffer-response
 							restclient-same-buffer-response-name
-						  (format "*HTTP %s %s*" method url)))
+						  (format "*HTTP %s %s*" method url)) raw)
 				  nil t)))
 
-(defun restclient-http-handle-response (status bufname)
-  "Switch to the buffer returned by `url-retreive'.
-    The buffer contains the raw HTTP response sent by the server."
-  (if restclient-same-buffer-response
-	  (if (get-buffer restclient-same-buffer-response-name)
-		  (kill-buffer restclient-same-buffer-response-name)))
-  (rename-buffer (generate-new-buffer-name bufname))
-  (switch-to-buffer-other-window (current-buffer))
+(defun restclient-prettify-response ()
   (save-excursion
 	(let ((start (point)) (guessed-mode))
 	  (while (not (looking-at "^\\s-*$"))
 		(when (looking-at "^Content-[Tt]ype: \\([^; \n]+\\).*$")
 		  (setq guessed-mode
 				(cdr (assoc-string
-				 (buffer-substring-no-properties (match-beginning 1) (match-end 1))
-				 '(("text/xml" . xml-mode)
-				   ("application/xml" . xml-mode)
-				   ("application/json" . js-mode)
-				   ("image/png" . image-mode)
-				   ("image/jpeg" . image-mode)
-				   ("image/gif" . image-mode)
-				   ("text/html" . html-mode))))))
+					  (buffer-substring-no-properties (match-beginning 1) (match-end 1))
+					  '(("text/xml" . xml-mode)
+						("application/xml" . xml-mode)
+						("application/json" . js-mode)
+						("image/png" . image-mode)
+						("image/jpeg" . image-mode)
+						("image/gif" . image-mode)
+						("text/html" . html-mode))))))
 		(forward-line))
 	  (let ((headers (buffer-substring-no-properties start (point))))
 		(forward-line)
@@ -68,7 +61,7 @@
 		  (unless (eq guessed-mode 'image-mode)
 			(apply guessed-mode '())
 			(font-lock-fontify-buffer))			
-	  
+		  
 		  (cond
 		   ((eq guessed-mode 'xml-mode)
 			(goto-char (point-min))
@@ -92,9 +85,19 @@
 			(insert "\n" headers)
 			(unless (eq guessed-mode 'image-mode)
 			  (comment-region hstart (point))
-			  (indent-region hstart (point))))
-		  
-		  ))))
+			  (indent-region hstart (point)))))))))
+
+(defun restclient-http-handle-response (status bufname raw)
+  "Switch to the buffer returned by `url-retreive'.
+    The buffer contains the raw HTTP response sent by the server."
+  (if restclient-same-buffer-response
+	  (if (get-buffer restclient-same-buffer-response-name)
+		  (kill-buffer restclient-same-buffer-response-name)))
+  (rename-buffer (generate-new-buffer-name bufname))
+  (switch-to-buffer-other-window (current-buffer))
+  
+  (unless raw
+	(restclient-prettify-response))
   (buffer-enable-undo))
 
 
@@ -121,7 +124,7 @@
 	  (point-max))))
 
 
-(defun restclient-http-send-current ()
+(defun restclient-http-send-current (&optional raw)
   (interactive)
   (goto-char (restclient-current-min))
   (save-excursion
@@ -139,8 +142,11 @@
 			  (forward-line))
 			(let ((entity (buffer-substring (point) (restclient-current-max))))
 			  (message "HTTP %s %s Headers:[%s] Body:[%s]" method url headers entity)
-			  (restclient-http-do method url headers entity))))))
+			  (restclient-http-do method url headers entity raw))))))
 
+(defun restclient-http-send-current-raw ()
+  (interactive)
+  (restclient-http-send-current t))
 
 (setq restclient-mode-keywords 
 	  (list (list restclient-method-url-regexp '(1 font-lock-keyword-face) '(2 font-lock-function-name-face))
@@ -157,6 +163,7 @@
 (define-derived-mode restclient-mode fundamental-mode "REST Client"
 
   (local-set-key "\C-c\C-c" 'restclient-http-send-current)
+  (local-set-key "\C-c\C-r" 'restclient-http-send-current-raw)
   (set (make-local-variable 'comment-start) "# ")
   (set (make-local-variable 'comment-start-skip) "#\\W*")
   (set (make-local-variable 'comment-column) 48)

@@ -1,37 +1,72 @@
 # restclient.el
 
-This is a tool to manually explore and test HTTP REST webservices. Runs queries from a plain-text query sheet, displays results as a pretty-printed XML, JSON and even images.
+This is a tool to manually explore and test HTTP REST webservices. 
+Runs queries from a plain-text query sheet, 
+displays results as a pretty-printed XML, JSON and even images.
 
 # Usage
 
-Deploy restclient.el into your site-lisp as usual, require it and make a text file with queries. C-c C-c runs the query under the cursor.
+Deploy `restclient.el` into your site-lisp as usual, 
+`(require 'restclient)` and prepare a text file with queries. 
+
+`restclient-mode` is a major mode which does a bit of highlighting 
+and supports a few additional keypresses:
+
+- `C-c C-c`: runs the query under the cursor, tries to pretty-print the response (if possible)
+- `C-c C-r`: same, but doesn't do anything with the response, just shows the buffer
 
 Query file example:
 
 	# -*- restclient -*-
 	#
-	# Sync test
+	# Gets user timeline, formats JSON, shows response status and headers underneath
 	#
-	POST http://somehost.com/webservic/user/aba/sync?session=1331294083924
-	Authorization: token=dfsdsffffffffffffff234435lkjsdfl
-	X-HTTP-Method: PUT
-
-	<?xml version="1.0" encoding="UTF-8"?><Update id="716762662"><items></items></Update>
-
 	#
-	# User details
+	GET http://api.twitter.com/1/statuses/user_timeline.json?screen_name=twitterapi&count=2
 	#
-	GET http://somehost.com/webservic/user/aba?sessionId=1330619005027
-	Authorization: token=dfsdsffffffffffffff234435lkjsdfl
+	# XML is supported - highlight, pretty-print
+	#
+	GET http://www.redmine.org/issues.xml?limit=10
 
 	#
+	# It can even show an image!
 	#
-	GET http://api.twitter.com/1/statuses/user_timeline.json?include_entities=true&include_rts=true&screen_name=twitterapi&count=2
+	GET http://upload.wikimedia.org/wikipedia/commons/6/63/Wikipedia-logo.png
 	#
+	# A bit of json GET, you can pass headers too
 	#
-	GET http://img.yandex.net/i/www/logo.png
+	GET http://jira.atlassian.com/rest/api/latest/issue/JRA-9
+	User-Agent: Emacs24
+	Accept-Encoding: application/xml
+
+	#
+	# Post works too, entity just goes after an empty line. Same is for PUT.
+	#
+	POST https://jira.atlassian.com/rest/api/2/search
+	Content-Type: application/json
+
+	{
+		"jql": "project = HSP",
+		"startAt": 0,
+		"maxResults": 15,
+		"fields": [
+			"summary",
+			"status",
+			"assignee"
+		]
+	}
+	#
+	# And delete, will return not-found error...
+	#
+	DELETE https://jira.atlassian.com/rest/api/2/version/20
 
 
-Lines starting with `#` are considered comments AND also act as separators. Yes, that means you can't post shell script as PUT entity. But I don't care. 
+Lines starting with `#` are considered comments AND also act as separators. 
 
 HTTPS and image display requires additional dll's on windows (libtls, libpng, libjpeg etc), which are not in the emacs distribution.
+
+# Known issues
+
+- Comment lines `#` act as end of enitity. Yes, that means you can't post shell script or anything with hashes as PUT/POST entity. I'm fine with this right now,
+but may use more unique separator in future.
+- I'm not sure if it handles different encodings, I suspect it won't play well with anything non-ascii. I'm yet to figure it out.
