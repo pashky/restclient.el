@@ -21,7 +21,7 @@ Query file example:
 	#
 	# User details
 	#
-	GET http://91.206.1.172/webservices/user/aba?sessionId=1330619005027
+	GET http://somehost.com/webservic/user/aba?sessionId=1330619005027
 	Authorization: token=dfsdsffffffffffffff234435lkjsdfl
 
 	#
