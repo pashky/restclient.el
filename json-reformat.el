@@ -1,6 +1,8 @@
-(require 'json)
 ;; JSON reformat snippet
 ;; from https://gist.github.com/1789605
+
+(require 'json)
+(require 'cl)
 
 (defun json-reformat:indent (level)
   (make-string (* level 4) ? ))
