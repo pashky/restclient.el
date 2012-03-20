@@ -26,6 +26,13 @@
   (setq restclient-within-call nil))
 (ad-activate 'url-http-handle-authentication)
 
+(defadvice url-cache-extract (around restclient-fix-2)
+  (if restclient-within-call
+	  (setq success t)
+	ad-do-it)
+  (setq restclient-within-call nil))
+(ad-activate 'url-cache-extract)
+
 (defun restclient-http-do (method url headers entity raw)
   "Send ARGS to URL as a POST request."
   (let* ((url-request-method method)
