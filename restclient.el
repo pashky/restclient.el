@@ -67,8 +67,8 @@
 		  (delete-region start (point))
 		  (unless (eq guessed-mode 'image-mode)
 			(apply guessed-mode '())
-			(font-lock-fontify-buffer))			
-		  
+			(font-lock-fontify-buffer))
+
 		  (cond
 		   ((eq guessed-mode 'xml-mode)
 			(goto-char (point-min))
@@ -81,12 +81,12 @@
 			  (delete-region (point-min) (point-max))
 			  (fundamental-mode)
 			  (insert-image (create-image img nil t))
-			  
+
 			  ))
-		   
-		   ((eq guessed-mode 'js-mode)			
+
+		   ((eq guessed-mode 'js-mode)
 			(json-reformat-region (point-min) (point-max))))
-		  
+
 		  (goto-char (point-max))
 		  (let ((hstart (point)))
 			(insert "\n" headers)
@@ -102,7 +102,7 @@
 		  (kill-buffer restclient-same-buffer-response-name)))
   (rename-buffer (generate-new-buffer-name bufname))
   (switch-to-buffer-other-window (current-buffer))
-  
+
   (unless raw
 	(restclient-prettify-response))
   (buffer-enable-undo))
@@ -117,19 +117,17 @@
 (defun restclient-current-min ()
   (save-excursion
 	(beginning-of-line)
-	(if (looking-at "^#")
-		(if (re-search-forward "^[^#]" (point-max) t)
-			(point-at-bol))
-	  (if (re-search-backward "^#" (point-min) t)
-		  (point-at-bol 2)
-		(point-min)))))
+        (if (looking-at restclient-method-url-regexp)
+            (point-at-bol)
+          (if (re-search-backward restclient-method-url-regexp (point-min) t)
+              (point-at-bol)
+            (point-min)))))
 
 (defun restclient-current-max ()
   (save-excursion
-	(if (re-search-forward "^#" (point-max) t)
+	(if (re-search-forward restclient-method-url-regexp (point-max) t)
 		(point-at-bol)
 	  (point-max))))
-
 
 (defun restclient-http-send-current (&optional raw)
   (interactive)
@@ -155,10 +153,10 @@
   (interactive)
   (restclient-http-send-current t))
 
-(setq restclient-mode-keywords 
+(setq restclient-mode-keywords
 	  (list (list restclient-method-url-regexp '(1 font-lock-keyword-face) '(2 font-lock-function-name-face))
 			(list restclient-header-regexp '(1 font-lock-variable-name-face) '(2 font-lock-string-face))
-			
+
 			))
 
 (defvar restclient-mode-syntax-table
