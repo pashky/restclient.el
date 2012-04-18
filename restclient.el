@@ -131,6 +131,7 @@
 	  (point-max))))
 
 
+;;;###autoload
 (defun restclient-http-send-current (&optional raw)
   (interactive)
   (goto-char (restclient-current-min))
@@ -151,6 +152,7 @@
 			  (message "HTTP %s %s Headers:[%s] Body:[%s]" method url headers entity)
 			  (restclient-http-do method url headers entity raw))))))
 
+;;;###autoload
 (defun restclient-http-send-current-raw ()
   (interactive)
   (restclient-http-send-current t))
