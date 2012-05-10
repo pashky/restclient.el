@@ -161,7 +161,8 @@
   (restclient-http-send-current t))
 
 (setq restclient-mode-keywords
-	  (list (list restclient-method-url-regexp '(1 font-lock-keyword-face) '(2 font-lock-function-name-face))
+	  (list (list restclient-method-url-regexp '(1 font-lock-keyword-face) '(2 font-lock-function-name-face)
+		      '(1 follow-link))
 			(list restclient-header-regexp '(1 font-lock-variable-name-face) '(2 font-lock-string-face))
 
 			))
@@ -179,8 +180,10 @@
   (set (make-local-variable 'comment-start) "# ")
   (set (make-local-variable 'comment-start-skip) "#\\W*")
   (set (make-local-variable 'comment-column) 48)
-
+  (local-set-key [follow-link]
+    (lambda (pos)
+      (restclient-http-send-current)
+      (return)))
   (set (make-local-variable 'font-lock-defaults) '(restclient-mode-keywords)))
-
 
 (provide 'restclient)
