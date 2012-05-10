@@ -146,7 +146,7 @@
 			(forward-line)
 			(while (re-search-forward restclient-header-regexp (point-at-eol) t)
 			  (setq headers (cons (cons (buffer-substring-no-properties (match-beginning 1) (match-end 1))
-										(buffer-substring-no-properties (match-beginning 2) (match-end 2)))
+						    (buffer-substring-no-properties (match-beginning 2) (match-end 2)))
 								  headers))
 			  (forward-line))
 			(when (looking-at "^\\s-*$")
