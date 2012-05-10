@@ -7,9 +7,6 @@
 (require 'url)
 (require 'json-reformat)
 
-(add-to-list 'url-unreserved-chars ?/)
-(add-to-list 'url-unreserved-chars ?:)
-
 (defcustom restclient-same-buffer-response t
   "Re-use same buffer for responses or create a new one each time")
 
@@ -139,21 +136,22 @@
   (interactive)
   (goto-char (restclient-current-min))
   (save-excursion
-	(when (re-search-forward restclient-method-url-regexp (point-max) t)
-	  (let ((method (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
-			(url (url-hexify-string (buffer-substring-no-properties (match-beginning 2) (match-end 2))))
-			(headers '()))
-			(forward-line)
-			(while (re-search-forward restclient-header-regexp (point-at-eol) t)
-			  (setq headers (cons (cons (buffer-substring-no-properties (match-beginning 1) (match-end 1))
-						    (buffer-substring-no-properties (match-beginning 2) (match-end 2)))
-								  headers))
-			  (forward-line))
-			(when (looking-at "^\\s-*$")
-			  (forward-line))
-			(let ((entity (buffer-substring (point) (restclient-current-max))))
-			  (message "HTTP %s %s Headers:[%s] Body:[%s]" method url headers entity)
-			  (restclient-http-do method url headers entity raw))))))
+    (when (re-search-forward restclient-method-url-regexp (point-max) t)
+      (let ((url-unreserved-chars (append (list ?/ ?:) url-unreserved-chars)))
+	(let ((method (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
+	      (url (url-hexify-string (buffer-substring-no-properties (match-beginning 2) (match-end 2))))
+	      (headers '()))
+	  (forward-line)
+	  (while (re-search-forward restclient-header-regexp (point-at-eol) t)
+	    (setq headers (cons (cons (buffer-substring-no-properties (match-beginning 1) (match-end 1))
+				      (buffer-substring-no-properties (match-beginning 2) (match-end 2)))
+				headers))
+	    (forward-line))
+	  (when (looking-at "^\\s-*$")
+	    (forward-line))
+	  (let ((entity (buffer-substring (point) (restclient-current-max))))
+	    (message "HTTP %s %s Headers:[%s] Body:[%s]" method url headers entity)
+	    (restclient-http-do method url headers entity raw)))))))
 
 ;;;###autoload
 (defun restclient-http-send-current-raw ()
