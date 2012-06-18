@@ -5,7 +5,7 @@
 ;; Author: Pavel Kurnosov <pashky@gmail.com>
 ;; Maintainer: Pavel Kurnosov <pashky@gmail.com>
 ;; Created: 01 Apr 2012
-;; Keywords: languages
+;; Keywords: http
      
 ;; This file is not part of GNU Emacs.
 ;; This file is public domain software. Do what you want.
