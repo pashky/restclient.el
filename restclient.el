@@ -1,12 +1,12 @@
 ;;; restclient.el --- An interactive HTTP client for Emacs
-     
+
 ;; Public domain.
-     
+
 ;; Author: Pavel Kurnosov <pashky@gmail.com>
 ;; Maintainer: Pavel Kurnosov <pashky@gmail.com>
 ;; Created: 01 Apr 2012
 ;; Keywords: http
-     
+
 ;; This file is not part of GNU Emacs.
 ;; This file is public domain software. Do what you want.
 
@@ -73,8 +73,8 @@
 		  (delete-region start (point))
 		  (unless (eq guessed-mode 'image-mode)
 			(apply guessed-mode '())
-			(font-lock-fontify-buffer))			
-		  
+			(font-lock-fontify-buffer))
+
 		  (cond
 		   ((eq guessed-mode 'xml-mode)
 			(goto-char (point-min))
@@ -87,12 +87,12 @@
 			  (delete-region (point-min) (point-max))
 			  (fundamental-mode)
 			  (insert-image (create-image img nil t))
-			  
+
 			  ))
-		   
-		   ((eq guessed-mode 'js-mode)			
+
+		   ((eq guessed-mode 'js-mode)
 			(json-reformat-region (point-min) (point-max))))
-		  
+
 		  (goto-char (point-max))
 		  (let ((hstart (point)))
 			(insert "\n" headers)
@@ -108,7 +108,7 @@
 		  (kill-buffer restclient-same-buffer-response-name)))
   (rename-buffer (generate-new-buffer-name bufname))
   (switch-to-buffer-other-window (current-buffer))
-  
+
   (unless raw
 	(restclient-prettify-response))
   (buffer-enable-undo))
@@ -163,10 +163,10 @@
   (interactive)
   (restclient-http-send-current t))
 
-(setq restclient-mode-keywords 
+(setq restclient-mode-keywords
 	  (list (list restclient-method-url-regexp '(1 font-lock-keyword-face) '(2 font-lock-function-name-face))
 			(list restclient-header-regexp '(1 font-lock-variable-name-face) '(2 font-lock-string-face))
-			
+
 			))
 
 (defvar restclient-mode-syntax-table
@@ -175,6 +175,7 @@
 	(modify-syntax-entry ?\n ">#" table)
 	table))
 
+;;;###autoload
 (define-derived-mode restclient-mode fundamental-mode "REST Client"
 
   (local-set-key "\C-c\C-c" 'restclient-http-send-current)
