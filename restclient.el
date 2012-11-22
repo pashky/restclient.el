@@ -114,26 +114,34 @@
 (defun restclient-decode-response (raw-http-response-buffer target-buffer-name)
   "Decode the HTTP response using the charset (encoding) specified in the
    Content-Type header. If no charset is specified, default to UTF-8."
-  (let* ((decoded-http-response-buffer (get-buffer-create
-					(generate-new-buffer-name target-buffer-name)))
-	 (charset-regexp "Content-Type.*charset=\\([-A-Za-z0-9]+\\)")
+  (let* ((charset-regexp "Content-Type.*charset=\\([-A-Za-z0-9]+\\)")
+         (image? (save-excursion
+                   (search-forward-regexp "Content-Type.*[Ii]mage" nil t)))
 	 (encoding (if (save-excursion
 			 (search-forward-regexp charset-regexp nil t))
 		       (intern (downcase (match-string 1)))
 		     'utf-8)))
-    ;; Switch to the new, empty buffer that will contain the decoded HTTP
-    ;; response. Set it's encoding, copy the content from the unencoded
-    ;; HTTP response buffer and decode.
-    (switch-to-buffer-other-window decoded-http-response-buffer)
-    (setq buffer-file-coding-system encoding)
-    (save-excursion
-      (insert-buffer-substring raw-http-response-buffer))
-    (kill-buffer raw-http-response-buffer)
-    (condition-case nil
-        (decode-coding-region (point-min) (point-max) encoding)
-      (error
-       (message (concat "Error when trying to decode http response with encoding: "
-                        (symbol-name encoding)))))))
+    (if image?
+        ;; Dont' attempt to decode. Instead, just switch to the raw HTTP response buffer and
+        ;; rename it to target-buffer-name.
+        (progn
+          (switch-to-buffer-other-window raw-http-response-buffer)
+          (rename-buffer target-buffer-name))
+      ;; Else, switch to the new, empty buffer that will contain the decoded HTTP
+      ;; response. Set its encoding, copy the content from the unencoded
+      ;; HTTP response buffer and decode.
+      (let ((decoded-http-response-buffer (get-buffer-create
+                                           (generate-new-buffer-name target-buffer-name))))
+        (switch-to-buffer-other-window decoded-http-response-buffer)
+        (setq buffer-file-coding-system encoding)
+        (save-excursion
+          (insert-buffer-substring raw-http-response-buffer))
+        (kill-buffer raw-http-response-buffer)
+        (condition-case nil
+            (decode-coding-region (point-min) (point-max) encoding)
+          (error
+           (message (concat "Error when trying to decode http response with encoding: "
+                            (symbol-name encoding)))))))))
 
 (defconst restclient-method-url-regexp
   "^\\(GET\\|POST\\|DELETE\\|PUT\\|HEAD\\|OPTIONS\\) \\(.*\\)$")
