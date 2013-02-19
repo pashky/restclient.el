@@ -144,7 +144,7 @@
                             (symbol-name encoding)))))))))
 
 (defconst restclient-method-url-regexp
-  "^\\(GET\\|POST\\|DELETE\\|PUT\\|HEAD\\|OPTIONS\\) \\(.*\\)$")
+  "^\\(GET\\|POST\\|DELETE\\|PUT\\|HEAD\\|OPTIONS\\|PATCH\\) \\(.*\\)$")
 
 (defconst restclient-header-regexp
   "^\\([^ :]+\\): \\(.*\\)$")
