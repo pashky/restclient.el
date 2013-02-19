@@ -36,7 +36,7 @@
   (cond ((consp val) (json-reformat:p-of-list val level))
         ((numberp val) (json-reformat:p-of-number val))
         ((vectorp val) (json-reformat:p-of-vector val level))
-        ((null val) "\"\"")
+        ((null val) "null")
         ((symbolp val) (json-reformat:p-of-symbol val))
         (t (concat "\"" val "\""))))
 
