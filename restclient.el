@@ -39,17 +39,40 @@
   (setq restclient-within-call nil))
 (ad-activate 'url-cache-extract)
 
+(defun restclient-restore-header-variables ()
+  (url-set-mime-charset-string)
+  (setq url-mime-language-string nil)
+  (setq url-mime-encoding-string nil)
+  (setq url-mime-accept-string nil)
+  (setq url-personal-mail-address nil))
+
 (defun restclient-http-do (method url headers entity raw)
   "Send ARGS to URL as a POST request."
-  (let* ((url-request-method method)
-		(url-request-extra-headers headers)
-		(url-request-data entity))
+  (let ((url-request-method method)
+        (url-request-extra-headers '())
+        (url-request-data entity))
+
+    (restclient-restore-header-variables)
+    
+    (dolist (header headers)
+      (let* ((mapped (assoc-string (downcase (car header))
+                                   '(("from" . url-personal-mail-address)
+                                     ("accept-encoding" . url-mime-encoding-string)
+                                     ("accept-charset" . url-mime-charset-string)
+                                     ("accept-language" . url-mime-language-string)
+                                     ("accept" . url-mime-accept-string)))))
+        
+        (if mapped
+            (set (cdr mapped) (cdr header))
+          (setq url-request-extra-headers (cons header url-request-extra-headers)))
+        ))
+
 	(setq restclient-within-call t)
 	(url-retrieve url 'restclient-http-handle-response
 				  (list (if restclient-same-buffer-response
 							restclient-same-buffer-response-name
-						  (format "*HTTP %s %s*" method url)) raw)
-				  )))
+						  (format "*HTTP %s %s*" method url)) raw))))
+
 
 (defun restclient-prettify-response ()
   (save-excursion
@@ -103,6 +126,7 @@
 (defun restclient-http-handle-response (status bufname raw)
   "Switch to the buffer returned by `url-retreive'.
     The buffer contains the raw HTTP response sent by the server."
+  (restclient-restore-header-variables)
   (if restclient-same-buffer-response
       (if (get-buffer restclient-same-buffer-response-name)
 	  (kill-buffer restclient-same-buffer-response-name)))
