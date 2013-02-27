@@ -38,7 +38,7 @@
         ((vectorp val) (json-reformat:p-of-vector val level))
         ((null val) "null")
         ((symbolp val) (json-reformat:p-of-symbol val))
-        (t (concat "\"" val "\""))))
+        (t (json-encode-string val))))
 
 (defun json:list-to-string (root level)
   (let (key val str)
