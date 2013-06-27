@@ -193,9 +193,11 @@
 	  (point-max))))
 
 (defun restclient-replace-all-in-string (replacements s)
-  (replace-regexp-in-string (regexp-opt (mapcar 'car replacements))
-                            (lambda (key) (cdr (assoc key replacements)))
-                            s))
+  (if replacements 
+      (replace-regexp-in-string (regexp-opt (mapcar 'car replacements))
+                                (lambda (key) (cdr (assoc key replacements)))
+                                s)
+    s))
 
 (defun restclient-replace-all-in-header (replacements header)
   (cons (car header)
