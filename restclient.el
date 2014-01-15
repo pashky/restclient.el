@@ -85,6 +85,7 @@
 					  '(("text/xml" . xml-mode)
 						("application/xml" . xml-mode)
 						("application/atom+xml" . xml-mode)
+                                                ("application/atomcat+xml" . xml-mode)
 						("application/json" . js-mode)
 						("image/png" . image-mode)
 						("image/jpeg" . image-mode)
