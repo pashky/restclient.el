@@ -219,6 +219,12 @@
           (setq vars (cons (cons name value) vars))))
       vars)))
 
+(defun restclient-trim-right (s)
+  "Remove whitespace at the end of S."
+  (if (string-match "[ \t\n\r]+\\'" s)
+      (replace-match "" t t s)
+    s))
+
 ;;;###autoload
 (defun restclient-http-send-current (&optional raw)
   (interactive)
@@ -236,7 +242,7 @@
 			  (forward-line))
 			(when (looking-at "^\\s-*$")
 			  (forward-line))
-			(let* ((entity (buffer-substring (point) (restclient-current-max)))
+			(let* ((entity (restclient-trim-right (buffer-substring (point) (restclient-current-max))))
 			       (vars (restclient-find-vars-before-point))
 			       (url (restclient-replace-all-in-string vars url))
 			       (headers (restclient-replace-all-in-headers vars headers))
