@@ -21,6 +21,9 @@
 
 (defvar restclient-within-call nil)
 
+(defvar request-start nil)
+(defvar request-end nil)
+
 ; The following disables the interactive request for user name and
 ; password should an API call encounter a permission-denied response.
 ; This API is meant to be usable without constant asking for username
@@ -68,6 +71,7 @@
         ))
 
 	(setq restclient-within-call t)
+  (setq request-start (current-time))
 	(url-retrieve url 'restclient-http-handle-response
 				  (list (if restclient-same-buffer-response
 							restclient-same-buffer-response-name
@@ -121,6 +125,7 @@
 		  (goto-char (point-max))
 		  (let ((hstart (point)))
 			(insert "\n" headers)
+      (insert (format "Request duration: %f\n" (float-time (time-subtract request-end request-start))))
 			(unless (eq guessed-mode 'image-mode)
 			  (comment-region hstart (point))
 			  (indent-region hstart (point)))))))))
@@ -128,6 +133,7 @@
 (defun restclient-http-handle-response (status bufname raw)
   "Switch to the buffer returned by `url-retreive'.
     The buffer contains the raw HTTP response sent by the server."
+  (setq request-end (current-time))
   (restclient-restore-header-variables)
   (if restclient-same-buffer-response
       (if (get-buffer restclient-same-buffer-response-name)
