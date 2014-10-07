@@ -228,8 +228,8 @@
 ;;;###autoload
 (defun restclient-http-send-current (&optional raw)
   (interactive)
-  (goto-char (restclient-current-min))
   (save-excursion
+    (goto-char (restclient-current-min))
     (when (re-search-forward restclient-method-url-regexp (point-max) t)
       (let ((method (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
             (url (buffer-substring-no-properties (match-beginning 2) (match-end 2)))
