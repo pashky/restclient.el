@@ -78,6 +78,12 @@ You declare a variable like this:
 
     :myvar = the value
 
+or like this:
+
+    :myvar := (some (artbitrary 'elisp)
+
+In second form, the value of variable is evaluated as Emacs Lisp form immediately. Evaluation of variables is done from top to bottom. Only one one-line form for each variable is allowed, so use `(progn ...)` and some virtual line wrap mode if you need more. There's no way to reference earlier declared _restclient_ variables, but you can always use `setq` to save state.
+
 After the var is declared, you can use it in the URL, the header values
 and the body.
 
@@ -88,7 +94,7 @@ and the body.
     # Update a user's name
 
     :user-id = 7
-    :the-name = Neo
+    :the-name := (format "%s %s %d" 'Neo (md5 "The Chosen") (+ 100 1))
 
     PUT http://localhost:4000/users/:user-id/
     Authorization: :my-auth
@@ -101,11 +107,14 @@ the body or headers, it will be sent along.
 Instead, place them above your calls or in separate sections. Like in
 the example above.
 
+And be careful of what you put in that elisp. No security checks are done, so it can format your hardrive. If there's a parsing or evaluation error, it will tell you in the minibuffer.
+
 # Known issues
 
 - Comment lines `#` act as end of enitity. Yes, that means you can't post shell script or anything with hashes as PUT/POST entity. I'm fine with this right now,
 but may use more unique separator in future.
 - I'm not sure if it handles different encodings, I suspect it won't play well with anything non-ascii. I'm yet to figure it out.
+- Variables usages are not highlighted 
 
 # License
 

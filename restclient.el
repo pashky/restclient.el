@@ -74,12 +74,12 @@
     (setq restclient-within-call t)
     (setq restclient-request-time-start (current-time))
     (url-retrieve url 'restclient-http-handle-response
-                  (list (if restclient-same-buffer-response
+                  (list method url (if restclient-same-buffer-response
                             restclient-same-buffer-response-name
                           (format "*HTTP %s %s*" method url)) raw))))
 
 
-(defun restclient-prettify-response ()
+(defun restclient-prettify-response (method url)
   (save-excursion
     (let ((start (point)) (guessed-mode))
       (while (not (looking-at "^\\s-*$"))
@@ -125,13 +125,13 @@
 
           (goto-char (point-max))
           (let ((hstart (point)))
-            (insert "\n" headers)
+            (insert "\n" method " " url "\n" headers)
             (insert (format "Request duration: %fs\n" (float-time (time-subtract restclient-request-time-end restclient-request-time-start))))
             (unless (eq guessed-mode 'image-mode)
               (comment-region hstart (point))
               (indent-region hstart (point)))))))))
 
-(defun restclient-http-handle-response (status bufname raw)
+(defun restclient-http-handle-response (status method url bufname raw)
   "Switch to the buffer returned by `url-retreive'.
     The buffer contains the raw HTTP response sent by the server."
   (setq restclient-request-time-end (current-time))
@@ -141,7 +141,7 @@
 	  (kill-buffer restclient-same-buffer-response-name)))
   (restclient-decode-response (current-buffer) bufname)
   (unless raw
-    (restclient-prettify-response))
+    (restclient-prettify-response method url))
   (buffer-enable-undo))
 
 (defun restclient-decode-response (raw-http-response-buffer target-buffer-name)
@@ -183,7 +183,10 @@
   "^\\([^ :]+\\): \\(.*\\)$")
 
 (defconst restclient-var-regexp
-  "^\\(:[^: ]+\\) = \\(.+\\)$")
+  "^\\(:[^: ]+\\)\\s-+\\(:?\\)=\\s-+\\(.+\\)$")
+
+(defconst restclient-evar-regexp
+  "^\\(:[^: ]+\\)\\s-+:=\\s-+\\(.+\\)$")
 
 (defun restclient-current-min ()
   (save-excursion
@@ -222,9 +225,13 @@
       (goto-char (point-min))
       (while (search-forward-regexp restclient-var-regexp bound t)
         (let ((name (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
-              (value (buffer-substring-no-properties (match-beginning 2) (match-end 2))))
-          (setq vars (cons (cons name value) vars))))
+              (should-eval (> (length (match-string 2)) 0))
+              (value (buffer-substring-no-properties (match-beginning 3) (match-end 3))))
+          (setq vars (cons (cons name (if should-eval (restclient-eval-var value) value)) vars))))
       vars)))
+
+(defun restclient-eval-var (string)
+  (with-output-to-string (princ (eval (read string)))))
 
 ;;;###autoload
 (defun restclient-http-send-current (&optional raw)
@@ -259,7 +266,8 @@
 (setq restclient-mode-keywords
       (list (list restclient-method-url-regexp '(1 font-lock-keyword-face) '(2 font-lock-function-name-face))
             (list restclient-header-regexp '(1 font-lock-variable-name-face) '(2 font-lock-string-face))
-            (list restclient-var-regexp '(1 font-lock-variable-name-face) '(2 font-lock-string-face))
+            (list restclient-evar-regexp '(1 font-lock-preprocessor-face) '(2 font-lock-function-name-face))
+            (list restclient-var-regexp '(1 font-lock-preprocessor-face) '(3 font-lock-string-face))
             ))
 
 (defvar restclient-mode-syntax-table
@@ -274,7 +282,7 @@
   (local-set-key "\C-c\C-c" 'restclient-http-send-current)
   (local-set-key "\C-c\C-r" 'restclient-http-send-current-raw)
   (set (make-local-variable 'comment-start) "# ")
-  (set (make-local-variable 'comment-start-skip) "#\\W*")
+  (set (make-local-variable 'comment-start-skip) "# *")
   (set (make-local-variable 'comment-column) 48)
 
   (set (make-local-variable 'font-lock-defaults) '(restclient-mode-keywords)))
