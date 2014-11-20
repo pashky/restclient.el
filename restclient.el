@@ -223,7 +223,8 @@
       (while (search-forward-regexp restclient-var-regexp bound t)
         (let ((name (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
               (value (buffer-substring-no-properties (match-beginning 2) (match-end 2))))
-          (setq vars (cons (cons name value) vars))))
+          (let ((expr (ignore-errors (eval (read value)))))
+            (setq vars (cons (cons name (if expr expr value)) vars)))))
       vars)))
 
 ;;;###autoload

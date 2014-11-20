@@ -78,6 +78,10 @@ You declare a variable like this:
 
     :myvar = the value
 
+Variables can also be assigned values from an elisp expression
+
+    :myvar = (base64-encode-string "username:password" t)
+
 After the var is declared, you can use it in the URL, the header values
 and the body.
 
