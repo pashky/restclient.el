@@ -20,6 +20,9 @@
 (defcustom restclient-same-buffer-response-name "*HTTP Response*"
   "Name for response buffer")
 
+(defcustom restclient-same-window-response nil
+  "If non-nil, displays the response in the same window")
+
 (defvar restclient-within-call nil)
 
 (defvar restclient-request-time-start nil)
@@ -57,7 +60,7 @@
         (url-request-data entity))
 
     (restclient-restore-header-variables)
-    
+
     (dolist (header headers)
       (let* ((mapped (assoc-string (downcase (car header))
                                    '(("from" . url-personal-mail-address)
@@ -65,7 +68,7 @@
                                      ("accept-charset" . url-mime-charset-string)
                                      ("accept-language" . url-mime-language-string)
                                      ("accept" . url-mime-accept-string)))))
-        
+
         (if mapped
             (set (cdr mapped) (cdr header))
           (setq url-request-extra-headers (cons header url-request-extra-headers)))
@@ -75,8 +78,8 @@
     (setq restclient-request-time-start (current-time))
     (url-retrieve url 'restclient-http-handle-response
                   (list method url (if restclient-same-buffer-response
-                            restclient-same-buffer-response-name
-                          (format "*HTTP %s %s*" method url)) raw))))
+				       restclient-same-buffer-response-name
+				     (format "*HTTP %s %s*" method url)) raw))))
 
 
 (defun restclient-prettify-response (method url)
@@ -158,14 +161,18 @@
         ;; Dont' attempt to decode. Instead, just switch to the raw HTTP response buffer and
         ;; rename it to target-buffer-name.
         (progn
-          (switch-to-buffer-other-window raw-http-response-buffer)
+	  (if restclient-same-window-response
+	      (switch-to-buffer raw-http-response-buffer)
+	    (switch-to-buffer-other-window raw-http-response-buffer))
           (rename-buffer target-buffer-name))
       ;; Else, switch to the new, empty buffer that will contain the decoded HTTP
       ;; response. Set its encoding, copy the content from the unencoded
       ;; HTTP response buffer and decode.
       (let ((decoded-http-response-buffer (get-buffer-create
                                            (generate-new-buffer-name target-buffer-name))))
-        (switch-to-buffer-other-window decoded-http-response-buffer)
+	(if restclient-same-window-response
+	    (switch-to-buffer decoded-http-response-buffer)
+	  (switch-to-buffer-other-window decoded-http-response-buffer))
         (setq buffer-file-coding-system encoding)
         (save-excursion
           (insert-buffer-substring raw-http-response-buffer))
@@ -205,7 +212,7 @@
       (point-max))))
 
 (defun restclient-replace-all-in-string (replacements s)
-  (if replacements 
+  (if replacements
       (replace-regexp-in-string (regexp-opt (mapcar 'car replacements))
                                 (lambda (key) (cdr (assoc key replacements)))
                                 s)
