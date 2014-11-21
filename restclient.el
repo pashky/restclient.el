@@ -50,7 +50,7 @@
   (setq url-mime-accept-string nil)
   (setq url-personal-mail-address nil))
 
-(defun restclient-http-do (method url headers entity raw)
+(defun restclient-http-do (method url headers entity raw stay-in-window)
   "Send ARGS to URL as a POST request."
   (let ((url-request-method method)
         (url-request-extra-headers '())
@@ -76,7 +76,7 @@
     (url-retrieve url 'restclient-http-handle-response
                   (list method url (if restclient-same-buffer-response
                             restclient-same-buffer-response-name
-                          (format "*HTTP %s %s*" method url)) raw))))
+                          (format "*HTTP %s %s*" method url)) raw stay-in-window))))
 
 
 (defun restclient-prettify-response (method url)
@@ -131,7 +131,7 @@
               (comment-region hstart (point))
               (indent-region hstart (point)))))))))
 
-(defun restclient-http-handle-response (status method url bufname raw)
+(defun restclient-http-handle-response (status method url bufname raw stay-in-window)
   "Switch to the buffer returned by `url-retreive'.
     The buffer contains the raw HTTP response sent by the server."
   (setq restclient-request-time-end (current-time))
@@ -139,10 +139,14 @@
   (if restclient-same-buffer-response
       (if (get-buffer restclient-same-buffer-response-name)
 	  (kill-buffer restclient-same-buffer-response-name)))
-  (restclient-decode-response (current-buffer) bufname)
-  (unless raw
-    (restclient-prettify-response method url))
-  (buffer-enable-undo))
+  
+  (with-current-buffer (restclient-decode-response (current-buffer) bufname)
+    (unless raw
+      (restclient-prettify-response method url))
+    (buffer-enable-undo)
+    (if stay-in-window
+        (display-buffer (current-buffer) t)
+      (switch-to-buffer-other-window (current-buffer)))))
 
 (defun restclient-decode-response (raw-http-response-buffer target-buffer-name)
   "Decode the HTTP response using the charset (encoding) specified in the
@@ -157,24 +161,25 @@
     (if image?
         ;; Dont' attempt to decode. Instead, just switch to the raw HTTP response buffer and
         ;; rename it to target-buffer-name.
-        (progn
-          (switch-to-buffer-other-window raw-http-response-buffer)
-          (rename-buffer target-buffer-name))
+        (with-current-buffer raw-http-response-buffer
+          (rename-buffer target-buffer-name)
+          raw-http-response-buffer)
       ;; Else, switch to the new, empty buffer that will contain the decoded HTTP
       ;; response. Set its encoding, copy the content from the unencoded
       ;; HTTP response buffer and decode.
       (let ((decoded-http-response-buffer (get-buffer-create
                                            (generate-new-buffer-name target-buffer-name))))
-        (switch-to-buffer-other-window decoded-http-response-buffer)
-        (setq buffer-file-coding-system encoding)
-        (save-excursion
-          (insert-buffer-substring raw-http-response-buffer))
-        (kill-buffer raw-http-response-buffer)
-        (condition-case nil
-            (decode-coding-region (point-min) (point-max) encoding)
-          (error
-           (message (concat "Error when trying to decode http response with encoding: "
-                            (symbol-name encoding)))))))))
+        (with-current-buffer decoded-http-response-buffer
+          (setq buffer-file-coding-system encoding)
+          (save-excursion
+            (insert-buffer-substring raw-http-response-buffer))
+          (kill-buffer raw-http-response-buffer)
+          (condition-case nil
+              (decode-coding-region (point-min) (point-max) encoding)
+            (error
+             (message (concat "Error when trying to decode http response with encoding: "
+                              (symbol-name encoding)))))
+          decoded-http-response-buffer)))))
 
 (defconst restclient-method-url-regexp
   "^\\(GET\\|POST\\|DELETE\\|PUT\\|HEAD\\|OPTIONS\\|PATCH\\) \\(.*\\)$")
@@ -234,7 +239,7 @@
   (with-output-to-string (princ (eval (read string)))))
 
 ;;;###autoload
-(defun restclient-http-send-current (&optional raw)
+(defun restclient-http-send-current (&optional raw stay-in-window)
   (interactive)
   (save-excursion
     (goto-char (restclient-current-min))
@@ -256,12 +261,17 @@
                (headers (restclient-replace-all-in-headers vars headers))
                (entity (restclient-replace-all-in-string vars entity)))
           (message "HTTP %s %s Headers:[%s] Body:[%s]" method url headers entity)
-          (restclient-http-do method url headers entity raw))))))
+          (restclient-http-do method url headers entity raw stay-in-window))))))
 
 ;;;###autoload
 (defun restclient-http-send-current-raw ()
   (interactive)
   (restclient-http-send-current t))
+
+;;;###autoload
+(defun restclient-http-send-current-stay-in-window ()
+  (interactive)
+  (restclient-http-send-current nil t))
 
 (setq restclient-mode-keywords
       (list (list restclient-method-url-regexp '(1 font-lock-keyword-face) '(2 font-lock-function-name-face))
@@ -278,9 +288,9 @@
 
 ;;;###autoload
 (define-derived-mode restclient-mode fundamental-mode "REST Client"
-
   (local-set-key "\C-c\C-c" 'restclient-http-send-current)
   (local-set-key "\C-c\C-r" 'restclient-http-send-current-raw)
+  (local-set-key "\C-c\C-v" 'restclient-http-send-current-stay-in-window)
   (set (make-local-variable 'comment-start) "# ")
   (set (make-local-variable 'comment-start-skip) "# *")
   (set (make-local-variable 'comment-column) 48)
