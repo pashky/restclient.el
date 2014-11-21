@@ -31,7 +31,7 @@
 ;; and password.
 (defadvice url-http-handle-authentication (around restclient-fix)
   (if restclient-within-call
-      (setq success t)
+      (setq success t ad-return-value t)
     ad-do-it)
   (setq restclient-within-call nil))
 (ad-activate 'url-http-handle-authentication)
@@ -135,18 +135,21 @@
   "Switch to the buffer returned by `url-retreive'.
     The buffer contains the raw HTTP response sent by the server."
   (setq restclient-request-time-end (current-time))
-  (restclient-restore-header-variables)
-  (if restclient-same-buffer-response
-      (if (get-buffer restclient-same-buffer-response-name)
-	  (kill-buffer restclient-same-buffer-response-name)))
-  
-  (with-current-buffer (restclient-decode-response (current-buffer) bufname)
-    (unless raw
-      (restclient-prettify-response method url))
-    (buffer-enable-undo)
-    (if stay-in-window
-        (display-buffer (current-buffer) t)
-      (switch-to-buffer-other-window (current-buffer)))))
+  (if (= (point-min) (point-max))
+      (signal (car (plist-get status :error)) (cdr (plist-get status :error)))
+    (restclient-restore-header-variables)
+    (if restclient-same-buffer-response
+        (if (get-buffer restclient-same-buffer-response-name)
+            (kill-buffer restclient-same-buffer-response-name)))
+    (message "curbuf1=%s %s %s" (buffer-live-p (current-buffer)) (current-buffer) status)
+    (when (buffer-live-p (current-buffer))
+      (with-current-buffer (restclient-decode-response (current-buffer) bufname)
+        (unless raw
+          (restclient-prettify-response method url))
+        (buffer-enable-undo)
+        (if stay-in-window
+            (display-buffer (current-buffer) t)
+          (switch-to-buffer-other-window (current-buffer)))))))
 
 (defun restclient-decode-response (raw-http-response-buffer target-buffer-name)
   "Decode the HTTP response using the charset (encoding) specified in the
