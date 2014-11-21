@@ -21,6 +21,7 @@ and supports a few additional keypresses:
 
 - `C-c C-c`: runs the query under the cursor, tries to pretty-print the response (if possible)
 - `C-c C-r`: same, but doesn't do anything with the response, just shows the buffer
+- `C-c C-v`: same as `C-c C-c`, but doesn't switch focus to other window
 
 Query file example:
 
