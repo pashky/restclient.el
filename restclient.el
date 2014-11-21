@@ -14,6 +14,10 @@
 (require 'url)
 (require 'json-reformat)
 
+(defcustom restclient-log-request t
+  "Log restclient requests to *Messages*"
+  :type 'boolean)
+
 (defcustom restclient-same-buffer-response t
   "Re-use same buffer for responses or create a new one each time")
 
@@ -263,7 +267,8 @@
                (url (restclient-replace-all-in-string vars url))
                (headers (restclient-replace-all-in-headers vars headers))
                (entity (restclient-replace-all-in-string vars entity)))
-          (message "HTTP %s %s Headers:[%s] Body:[%s]" method url headers entity)
+          (if restclient-log-request
+            (message "HTTP %s %s Headers:[%s] Body:[%s]" method url headers entity))
           (restclient-http-do method url headers entity raw stay-in-window))))))
 
 ;;;###autoload
