@@ -87,7 +87,7 @@
   (save-excursion
     (let ((start (point)) (guessed-mode))
       (while (not (looking-at "^\\s-*$"))
-        (when (looking-at "^Content-[Tt]ype: \\([^; \n]+\\).*$")
+        (when (looking-at "^Content-[Tt]ype: \\([^; \r\n]+\\).*$")
           (setq guessed-mode
                 (cdr (assoc-string
                       (buffer-substring-no-properties (match-beginning 1) (match-end 1))
