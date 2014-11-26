@@ -145,7 +145,6 @@
     (if restclient-same-buffer-response
         (if (get-buffer restclient-same-buffer-response-name)
             (kill-buffer restclient-same-buffer-response-name)))
-    (message "curbuf1=%s %s %s" (buffer-live-p (current-buffer)) (current-buffer) status)
     (when (buffer-live-p (current-buffer))
       (with-current-buffer (restclient-decode-response (current-buffer) bufname)
         (unless raw
