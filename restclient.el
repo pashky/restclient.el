@@ -36,16 +36,20 @@
 (defadvice url-http-handle-authentication (around restclient-fix)
   (if restclient-within-call
       (setq success t ad-return-value t)
-    ad-do-it)
-  (setq restclient-within-call nil))
+    ad-do-it))
 (ad-activate 'url-http-handle-authentication)
 
 (defadvice url-cache-extract (around restclient-fix-2)
   (if restclient-within-call
       (setq success t)
-    ad-do-it)
-  (setq restclient-within-call nil))
+    ad-do-it))
 (ad-activate 'url-cache-extract)
+
+(defadvice url-http-user-agent-string (around restclient-fix-3)
+  (if restclient-within-call
+      (setq ad-return-value nil)
+    ad-do-it))
+(ad-activate 'url-http-user-agent-string)
 
 (defun restclient-restore-header-variables ()
   (url-set-mime-charset-string)
@@ -138,6 +142,7 @@
 (defun restclient-http-handle-response (status method url bufname raw stay-in-window)
   "Switch to the buffer returned by `url-retreive'.
     The buffer contains the raw HTTP response sent by the server."
+  (setq restclient-within-call nil)
   (setq restclient-request-time-end (current-time))
   (if (= (point-min) (point-max))
       (signal (car (plist-get status :error)) (cdr (plist-get status :error)))
