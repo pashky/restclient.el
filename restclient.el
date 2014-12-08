@@ -319,6 +319,7 @@
 
   (set (make-local-variable 'font-lock-defaults) '(restclient-mode-keywords)))
 
+;;;###autoload (add-to-list 'auto-mode-alist '("\\.restclient\\'" . restclient-mode))
 
 (provide 'restclient)
 ;;; restclient.el ends here
