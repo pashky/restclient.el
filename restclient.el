@@ -121,7 +121,9 @@
           (delete-region start (point))
           (unless (eq guessed-mode 'image-mode)
             (apply guessed-mode '())
-            (font-lock-fontify-buffer))
+            (funcall (if (fboundp 'font-lock-ensure)
+                         #'font-lock-ensure
+                       #'font-lock-fontify-buffer)))
 
           (cond
            ((eq guessed-mode 'xml-mode)
@@ -242,7 +244,7 @@
         (restclient-replace-all-in-string replacements (cdr header))))
 
 (defun restclient-replace-all-in-headers (replacements headers)
-  (mapcar (apply-partially 'restclient-replace-all-in-header vars) headers))
+  (mapcar (apply-partially 'restclient-replace-all-in-header replacements) headers))
 
 (defun restclient-find-vars-before-point ()
   (let ((vars nil)
