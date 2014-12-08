@@ -110,6 +110,11 @@ the example above.
 
 And be careful of what you put in that elisp. No security checks are done, so it can format your hardrive. If there's a parsing or evaluation error, it will tell you in the minibuffer.
 
+# File extension
+
+For convenience `restclient` is activated automatically for files with
+the `restclient` extension.
+
 # Known issues
 
 - Comment lines `#` act as end of enitity. Yes, that means you can't post shell script or anything with hashes as PUT/POST entity. I'm fine with this right now,
