@@ -11,18 +11,28 @@
 ;; This file is not part of GNU Emacs.
 ;; This file is public domain software. Do what you want.
 
+;;; Code:
 (require 'url)
 (require 'json-reformat)
 
+(defgroup restclient nil
+  "An interactive HTTP client for Emacs."
+  :group 'tools)
+
 (defcustom restclient-log-request t
   "Log restclient requests to *Messages*"
+  :group 'restclient
   :type 'boolean)
 
 (defcustom restclient-same-buffer-response t
-  "Re-use same buffer for responses or create a new one each time")
+  "Re-use same buffer for responses or create a new one each time"
+  :group 'restclient
+  :type 'boolean)
 
 (defcustom restclient-same-buffer-response-name "*HTTP Response*"
-  "Name for response buffer")
+  "Name for response buffer"
+  :group 'restclient
+  :type 'string)
 
 (defvar restclient-within-call nil)
 
@@ -65,7 +75,7 @@
         (url-request-data entity))
 
     (restclient-restore-header-variables)
-    
+
     (dolist (header headers)
       (let* ((mapped (assoc-string (downcase (car header))
                                    '(("from" . url-personal-mail-address)
@@ -73,7 +83,7 @@
                                      ("accept-charset" . url-mime-charset-string)
                                      ("accept-language" . url-mime-language-string)
                                      ("accept" . url-mime-accept-string)))))
-        
+
         (if mapped
             (set (cdr mapped) (cdr header))
           (setq url-request-extra-headers (cons header url-request-extra-headers)))
@@ -221,7 +231,7 @@
       (point-max))))
 
 (defun restclient-replace-all-in-string (replacements s)
-  (if replacements 
+  (if replacements
       (replace-regexp-in-string (regexp-opt (mapcar 'car replacements))
                                 (lambda (key) (cdr (assoc key replacements)))
                                 s)
