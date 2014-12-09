@@ -139,7 +139,9 @@
               ))
 
            ((eq guessed-mode 'js-mode)
-            (json-reformat-region (point-min) (point-max))))
+            (json-reformat-region (point-min) (point-max))
+            (restclient-prettify-json-unicode)
+            ))
 
           (goto-char (point-max))
           (let ((hstart (point)))
@@ -148,6 +150,12 @@
             (unless (eq guessed-mode 'image-mode)
               (comment-region hstart (point))
               (indent-region hstart (point)))))))))
+
+(defun restclient-prettify-json-unicode ()
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "\\\\[Uu]\\([0-9a-fA-F]+\\)" nil t)
+      (replace-match (char-to-string (decode-char 'ucs (string-to-number (match-string 1) 16))) t nil))))
 
 (defun restclient-http-handle-response (status method url bufname raw stay-in-window)
   "Switch to the buffer returned by `url-retreive'.
