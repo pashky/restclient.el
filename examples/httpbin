@@ -1,0 +1,76 @@
+# -*- restclient -*-
+# Emacs restclient examples for httpbin.org
+# http://httpbin.org/: HTTP Request & Response Service
+
+# Returns Origin IP.
+GET http://httpbin.org/ip
+
+# Returns user-agent.
+GET http://httpbin.org/user-agent
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:31.0) Gecko/20100101 Firefox/31.0
+
+# Returns header dict.
+GET http://httpbin.org/headers
+
+# Returns GET data.
+GET http://httpbin.org/get?some=example&params=for&testing=restclient
+
+# Returns POST data.
+POST http://httpbin.org/post
+Content-Type: application/json
+
+{
+    "jql": "project = HSP",
+    "startAt": 0,
+    "maxResults": 15,
+    "fields": [
+        "summary",
+        "status",
+        "assignee"
+    ]
+}
+
+# Returns PUT data.
+PUT http://httpbin.org/put
+Content-Type: application/json
+
+{
+    "name": "emacs",
+    "awesomness": 9042
+}
+
+# Returns PATCH data.
+PATCH http://httpbin.org/patch
+Content-Type: application/xml
+
+[
+    {
+        "replace": "/awesomness",
+        "value": 9043
+    }
+]
+
+# Returns DELETE data
+DELETE http://httpbin.org/delete
+If-Match: "*"
+
+# HTTP Status codes
+# 404
+GET http://httpbin.org/status/404
+# 200
+GET http://httpbin.org/status/200
+
+# Returns given response headers.
+GET http://httpbin.org/response-headers?key=val
+
+# cookie data.
+GET http://httpbin.org/cookies
+Cookie: name=restclient
+
+# HTTPBasic Auth.
+:example-auth := (format "Basic %s" (base64-encode-string (format "%s:%s" "user" "password")))
+GET http://httpbin.org/basic-auth/user/password
+Authorization: :example-auth
+
+# Returns some XML
+GET http://httpbin.org/xml
