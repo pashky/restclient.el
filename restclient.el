@@ -6,14 +6,12 @@
 ;; Maintainer: Pavel Kurnosov <pashky@gmail.com>
 ;; Created: 01 Apr 2012
 ;; Keywords: http
-;; Package-Requires: ((json-reformat "0.0.1"))
 
 ;; This file is not part of GNU Emacs.
 ;; This file is public domain software. Do what you want.
 
 ;;; Code:
 (require 'url)
-(require 'json-reformat)
 
 (defgroup restclient nil
   "An interactive HTTP client for Emacs."
@@ -139,7 +137,7 @@
               ))
 
            ((eq guessed-mode 'js-mode)
-            (json-reformat-region (point-min) (point-max))
+            (json-pretty-print-buffer)
             (restclient-prettify-json-unicode)
             ))
 
