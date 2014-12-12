@@ -12,6 +12,7 @@
 
 ;;; Code:
 (require 'url)
+(require 'json)
 
 (defgroup restclient nil
   "An interactive HTTP client for Emacs."
