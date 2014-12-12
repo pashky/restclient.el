@@ -301,6 +301,39 @@
   (interactive)
   (restclient-http-send-current nil t))
 
+(defun restclient-jump-next ()
+  (interactive)
+  (let ((last-min nil))
+    (while (not (eq last-min (goto-char (restclient-current-min))))
+      (goto-char (restclient-current-min))
+      (setq last-min (point))))
+  (goto-char (restclient-current-max))
+  (goto-char (restclient-current-min)))
+
+(defun restclient-jump-prev ()
+  (interactive)
+  (let* ((current-min (restclient-current-min))
+         (end-of-entity
+          (save-excursion
+            (progn (goto-char (restclient-current-min))
+                   (while (and (or (looking-at "^\s*\\(#.*\\)?$")
+                                   (eq (point) current-min))
+                               (not (eq (point) (point-min))))
+                     (forward-line -1)
+                     (beginning-of-line))
+                   (point)))))
+    (unless (eq (point-min) end-of-entity)
+      (goto-char end-of-entity)
+      (goto-char (restclient-current-min)))))
+
+(defun restclient-mark-current ()
+  (interactive)
+  (goto-char (restclient-current-min))
+  (set-mark-command nil)
+  (goto-char (restclient-current-max))
+  (backward-char 1)
+  (setq deactivate-mark nil))
+
 (setq restclient-mode-keywords
       (list (list restclient-method-url-regexp '(1 font-lock-keyword-face) '(2 font-lock-function-name-face))
             (list restclient-header-regexp '(1 font-lock-variable-name-face) '(2 font-lock-string-face))
@@ -316,9 +349,12 @@
 
 ;;;###autoload
 (define-derived-mode restclient-mode fundamental-mode "REST Client"
-  (local-set-key "\C-c\C-c" 'restclient-http-send-current)
-  (local-set-key "\C-c\C-r" 'restclient-http-send-current-raw)
-  (local-set-key "\C-c\C-v" 'restclient-http-send-current-stay-in-window)
+  (local-set-key (kbd "C-c C-c") 'restclient-http-send-current)
+  (local-set-key (kbd "C-c C-r") 'restclient-http-send-current-raw)
+  (local-set-key (kbd "C-c C-v") 'restclient-http-send-current-stay-in-window)
+  (local-set-key (kbd "C-c C-n") 'restclient-jump-next)
+  (local-set-key (kbd "C-c C-p") 'restclient-jump-prev)
+  (local-set-key (kbd "C-c C-.") 'restclient-mark-current)
   (set (make-local-variable 'comment-start) "# ")
   (set (make-local-variable 'comment-start-skip) "# *")
   (set (make-local-variable 'comment-column) 48)
