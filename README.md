@@ -10,9 +10,8 @@ displays results as a pretty-printed XML, JSON and even images.
 
 You can easily install `restclient` using `package.el` from [MELPA](http://melpa.org/).
 
-Alternatively, deploy `restclient.el` into your site-lisp as usual, together with
-[`json-reformat`](https://github.com/gongo/json-reformat), then add
-`(require 'restclient)` to your Emacs start-up file.
+Alternatively, deploy `restclient.el` into your site-lisp as usual,
+then add `(require 'restclient)` to your Emacs start-up file.
 
 Once installed, you can prepare a text file with queries.
 
@@ -124,7 +123,7 @@ but may use more unique separator in future.
 
 # License
 
-Public domain, do whatever you want (apart from json-reformat.el thing, which is not mine)
+Public domain, do whatever you want.
 
 # Author
 
