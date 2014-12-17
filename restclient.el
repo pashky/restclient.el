@@ -138,7 +138,8 @@
               ))
 
            ((eq guessed-mode 'js-mode)
-            (json-pretty-print-buffer)
+            (let ((json-special-chars (remq (assoc ?/ json-special-chars) json-special-chars)))
+              (json-pretty-print-buffer))
             (restclient-prettify-json-unicode)
             ))
 
