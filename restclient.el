@@ -95,19 +95,26 @@
                             restclient-same-buffer-response-name
                           (format "*HTTP %s %s*" method url)) raw stay-in-window))))
 
+(defvar restclient-content-type-regexp (concat
+		"^Content-[Tt]ype: "
+		"\\(\\w+\\)/"
+		"\\(?:[^\\+]*\\+\\)*"
+		"\\([^;]+\\)"
+		";[^\\n]+$"))
 
 (defun restclient-prettify-response (method url)
   (save-excursion
     (let ((start (point)) (guessed-mode))
       (while (not (looking-at "^\\s-*$"))
-        (when (looking-at "^Content-[Tt]ype: \\([^; \r\n]+\\).*$")
+        (when (looking-at restclient-content-type-regexp)
           (setq guessed-mode
-                (cdr (assoc-string
-                      (buffer-substring-no-properties (match-beginning 1) (match-end 1))
+                (cdr (assoc-string (concat
+				    (buffer-substring-no-properties (match-beginning 1) (match-end 1))
+				    "/"
+				    (buffer-substring-no-properties (match-beginning 2) (match-end 2))
+				    )
                       '(("text/xml" . xml-mode)
                         ("application/xml" . xml-mode)
-                        ("application/atom+xml" . xml-mode)
-                        ("application/atomcat+xml" . xml-mode)
                         ("application/json" . js-mode)
                         ("image/png" . image-mode)
                         ("image/jpeg" . image-mode)
