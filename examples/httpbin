@@ -30,6 +30,9 @@ Content-Type: application/json
     ]
 }
 
+# Content type is loosely matched, could be application/vnd.whatever+json
+GET http://httpbin.org/response-headers?Content-Type=application/vnd.whatever%2Bjson;%20charset=UTF-8
+
 # Returns PUT data.
 PUT http://httpbin.org/put
 Content-Type: application/json
