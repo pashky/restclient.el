@@ -33,6 +33,12 @@
   :group 'restclient
   :type 'string)
 
+(defcustom restclient-print-curl nil
+  "Print cURL command next to request response"
+  :group 'restclient
+  :type 'boolean)
+
+
 (defvar restclient-within-call nil)
 
 (defvar restclient-request-time-start nil)
@@ -91,7 +97,7 @@
     (setq restclient-within-call t)
     (setq restclient-request-time-start (current-time))
     (url-retrieve url 'restclient-http-handle-response
-                  (list method url (if restclient-same-buffer-response
+                  (list method url headers entity (if restclient-same-buffer-response
                             restclient-same-buffer-response-name
                           (format "*HTTP %s %s*" method url)) raw stay-in-window))))
 
@@ -102,7 +108,7 @@
 		"\\([^;]+\\)"
 		";[^\\n]+$"))
 
-(defun restclient-prettify-response (method url)
+(defun restclient-prettify-response (method url request-headers request-entity)
   (save-excursion
     (let ((start (point)) (guessed-mode))
       (while (not (looking-at "^\\s-*$"))
@@ -156,7 +162,23 @@
             (insert (format "Request duration: %fs\n" (float-time (time-subtract restclient-request-time-end restclient-request-time-start))))
             (unless (eq guessed-mode 'image-mode)
               (comment-region hstart (point))
-              (indent-region hstart (point)))))))))
+              (indent-region hstart (point)))))
+        (when restclient-print-curl
+          (goto-char (point-min))
+          (insert
+           (concat comment-start nil)
+           (restclient-http-convert-to-curl method url request-headers request-entity)
+           (concat comment-end nil)
+           "\n\n"))
+        ))))
+
+(defun restclient-http-convert-to-curl (method url headers entity)
+  (concat
+   (format "curl -i -X %s %s " method (url-encode-url url))
+   (mapconcat (lambda (x) (format "-H '%s: %s'" (car x) (cdr x))) headers " ")
+   (let ((inlined-entity (replace-regexp-in-string "\n" "" entity)))
+     (when (not  (string= "" inlined-entity))
+       (format " --data-binary '%s'" inlined-entity)))))
 
 (defun restclient-prettify-json-unicode ()
   (save-excursion
@@ -164,7 +186,7 @@
     (while (re-search-forward "\\\\[Uu]\\([0-9a-fA-F]+\\)" nil t)
       (replace-match (char-to-string (decode-char 'ucs (string-to-number (match-string 1) 16))) t nil))))
 
-(defun restclient-http-handle-response (status method url bufname raw stay-in-window)
+(defun restclient-http-handle-response (status method url headers entity bufname raw stay-in-window)
   "Switch to the buffer returned by `url-retreive'.
     The buffer contains the raw HTTP response sent by the server."
   (setq restclient-within-call nil)
@@ -178,7 +200,7 @@
     (when (buffer-live-p (current-buffer))
       (with-current-buffer (restclient-decode-response (current-buffer) bufname)
         (unless raw
-          (restclient-prettify-response method url))
+          (restclient-prettify-response method url headers entity))
         (buffer-enable-undo)
         (if stay-in-window
             (display-buffer (current-buffer) t)
