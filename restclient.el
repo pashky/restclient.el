@@ -116,6 +116,7 @@
                       '(("text/xml" . xml-mode)
                         ("application/xml" . xml-mode)
                         ("application/json" . js-mode)
+                        ("application/hal+json" . js-mode)
                         ("image/png" . image-mode)
                         ("image/jpeg" . image-mode)
                         ("image/gif" . image-mode)
