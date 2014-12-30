@@ -95,12 +95,7 @@
                             restclient-same-buffer-response-name
                           (format "*HTTP %s %s*" method url)) raw stay-in-window))))
 
-(defvar restclient-content-type-regexp (concat
-		"^Content-[Tt]ype: "
-		"\\(\\w+\\)/"
-		"\\(?:[^\\+]*\\+\\)*"
-		"\\([^;]+\\)"
-		";[^\\n]+$"))
+(defvar restclient-content-type-regexp "^Content-[Tt]ype: \\(\\w+\\)/\\(?:[^\\+\r\n]*\\+\\)*\\([^;\r\n]+\\)")
 
 (defun restclient-prettify-response (method url)
   (save-excursion
@@ -161,7 +156,7 @@
 (defun restclient-prettify-json-unicode ()
   (save-excursion
     (goto-char (point-min))
-    (while (re-search-forward "\\\\[Uu]\\([0-9a-fA-F]+\\)" nil t)
+    (while (re-search-forward "\\\\[Uu]\\([0-9a-fA-F]\\{4\\}+\\)" nil t)
       (replace-match (char-to-string (decode-char 'ucs (string-to-number (match-string 1) 16))) t nil))))
 
 (defun restclient-http-handle-response (status method url bufname raw stay-in-window)

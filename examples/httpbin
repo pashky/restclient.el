@@ -33,6 +33,9 @@ Content-Type: application/json
 # Content type is loosely matched, could be application/vnd.whatever+json
 GET http://httpbin.org/response-headers?Content-Type=application/vnd.whatever%2Bjson;%20charset=UTF-8
 
+# Content type is loosely matched, could be application/vnd.whatever+json
+GET http://httpbin.org/response-headers?Content-Type=application/something%2Bjson
+
 # Returns PUT data.
 PUT http://httpbin.org/put
 Content-Type: application/json
@@ -77,3 +80,11 @@ Authorization: :example-auth
 
 # Returns some XML
 GET http://httpbin.org/xml
+#
+# Test for unicode
+PUT http://httpbin.org/put
+Content-Type: application/json
+
+{
+    "text": "\u2018a"
+}
