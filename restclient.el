@@ -33,6 +33,11 @@
   :group 'restclient
   :type 'string)
 
+(defcustom restclient-inhibit-cookies nil
+  "Inhibit restclient from sending cookies implicitly"
+  :group 'restclient
+  :type 'boolean)
+
 (defvar restclient-within-call nil)
 
 (defvar restclient-request-time-start nil)
@@ -93,7 +98,7 @@
     (url-retrieve url 'restclient-http-handle-response
                   (list method url (if restclient-same-buffer-response
                             restclient-same-buffer-response-name
-                          (format "*HTTP %s %s*" method url)) raw stay-in-window))))
+                          (format "*HTTP %s %s*" method url)) raw stay-in-window) nil restclient-inhibit-cookies)))
 
 (defvar restclient-content-type-regexp "^Content-[Tt]ype: \\(\\w+\\)/\\(?:[^\\+\r\n]*\\+\\)*\\([^;\r\n]+\\)")
 
