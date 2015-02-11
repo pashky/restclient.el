@@ -124,8 +124,17 @@
                         ("image/gif" . image-mode)
                         ("text/html" . html-mode))))))
         (forward-line))
+      (unless guessed-mode
+        (while (looking-at "^\\s-*$")
+          (forward-line))
+        (setq guessed-mode
+              (assoc-default nil
+                             ;; magic mode matches
+                             '(("<\\?xml " . xml-mode)
+                               ("{\\s-*\"" . js-mode))
+                             (lambda (re _dummy)
+                               (looking-at re)))))
       (let ((headers (buffer-substring-no-properties start (point))))
-        (forward-line)
         (when guessed-mode
           (delete-region start (point))
           (unless (eq guessed-mode 'image-mode)
