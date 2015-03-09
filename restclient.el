@@ -124,9 +124,9 @@
                         ("image/gif" . image-mode)
                         ("text/html" . html-mode))))))
         (forward-line))
+      (while (looking-at "^\\s-*$")
+        (forward-line))
       (unless guessed-mode
-        (while (looking-at "^\\s-*$")
-          (forward-line))
         (setq guessed-mode
               (assoc-default nil
                              ;; magic mode matches
