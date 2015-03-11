@@ -99,23 +99,23 @@
     (setq restclient-within-call t)
     (setq restclient-request-time-start (current-time))
     (url-retrieve url 'restclient-http-handle-response
-                  (list method url (if restclient-same-buffer-response
+                  (list method url headers entity (if restclient-same-buffer-response
                             restclient-same-buffer-response-name
                           (format "*HTTP %s %s*" method url)) raw stay-in-window) nil restclient-inhibit-cookies)))
 
 (defvar restclient-content-type-regexp "^Content-[Tt]ype: \\(\\w+\\)/\\(?:[^\\+\r\n]*\\+\\)*\\([^;\r\n]+\\)")
 
-(defun restclient-prettify-response (method url)
+(defun restclient-prettify-response (method url request-headers request-entity)
   (save-excursion
     (let ((start (point)) (guessed-mode))
       (while (not (looking-at "^\\s-*$"))
         (when (looking-at restclient-content-type-regexp)
           (setq guessed-mode
                 (cdr (assoc-string (concat
-				    (buffer-substring-no-properties (match-beginning 1) (match-end 1))
-				    "/"
-				    (buffer-substring-no-properties (match-beginning 2) (match-end 2))
-				    )
+                                    (buffer-substring-no-properties (match-beginning 1) (match-end 1))
+                                    "/"
+                                    (buffer-substring-no-properties (match-beginning 2) (match-end 2))
+                                    )
                       '(("text/xml" . xml-mode)
                         ("application/xml" . xml-mode)
                         ("application/json" . js-mode)
@@ -176,7 +176,7 @@
     (while (re-search-forward "\\\\[Uu]\\([0-9a-fA-F]\\{4\\}+\\)" nil t)
       (replace-match (char-to-string (decode-char 'ucs (string-to-number (match-string 1) 16))) t nil))))
 
-(defun restclient-http-handle-response (status method url bufname raw stay-in-window)
+(defun restclient-http-handle-response (status method url headers entity bufname raw stay-in-window)
   "Switch to the buffer returned by `url-retreive'.
     The buffer contains the raw HTTP response sent by the server."
   (setq restclient-within-call nil)
@@ -190,7 +190,7 @@
     (when (buffer-live-p (current-buffer))
       (with-current-buffer (restclient-decode-response (current-buffer) bufname)
         (unless raw
-          (restclient-prettify-response method url))
+          (restclient-prettify-response method url headers entity))
         (buffer-enable-undo)
         (run-hooks 'restclient-response-loaded-hook)
         (if stay-in-window
@@ -203,10 +203,10 @@
   (let* ((charset-regexp "Content-Type.*charset=\\([-A-Za-z0-9]+\\)")
          (image? (save-excursion
                    (search-forward-regexp "Content-Type.*[Ii]mage" nil t)))
-	 (encoding (if (save-excursion
-			 (search-forward-regexp charset-regexp nil t))
-		       (intern (downcase (match-string 1)))
-		     'utf-8)))
+         (encoding (if (save-excursion
+                         (search-forward-regexp charset-regexp nil t))
+                       (intern (downcase (match-string 1)))
+                     'utf-8)))
     (if image?
         ;; Dont' attempt to decode. Instead, just switch to the raw HTTP response buffer and
         ;; rename it to target-buffer-name.
@@ -287,41 +287,62 @@
 (defun restclient-eval-var (string)
   (with-output-to-string (princ (eval (read string)))))
 
-;;;###autoload
-(defun restclient-http-send-current (&optional raw stay-in-window)
+(defun restclient-read-current-query ()
+  "Reads query at point into a list of 4 elements: method, url, headers, entity"
   (interactive)
   (save-excursion
     (goto-char (restclient-current-min))
-    (when (re-search-forward restclient-method-url-regexp (point-max) t)
-      (let ((method (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
-            (url (buffer-substring-no-properties (match-beginning 2) (match-end 2)))
-            (headers '()))
-        (forward-line)
-        (while (re-search-forward restclient-header-regexp (point-at-eol) t)
-          (setq headers (cons (cons (buffer-substring-no-properties (match-beginning 1) (match-end 1))
-                                    (buffer-substring-no-properties (match-beginning 2) (match-end 2)))
-                              headers))
-          (forward-line))
-        (when (looking-at "^\\s-*$")
-          (forward-line))
-        (let* ((entity (buffer-substring (point) (restclient-current-max)))
-               (vars (restclient-find-vars-before-point))
-               (url (restclient-replace-all-in-string vars url))
-               (headers (restclient-replace-all-in-headers vars headers))
-               (entity (restclient-replace-all-in-string vars entity)))
-          (if restclient-log-request
-            (message "HTTP %s %s Headers:[%s] Body:[%s]" method url headers entity))
-          (restclient-http-do method url headers entity raw stay-in-window))))))
+    (if (re-search-forward restclient-method-url-regexp (point-max) t)
+        (let ((method (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
+              (url (buffer-substring-no-properties (match-beginning 2) (match-end 2)))
+              (headers '()))
+          (forward-line)
+          (while (re-search-forward restclient-header-regexp (point-at-eol) t)
+            (setq headers (cons (cons (buffer-substring-no-properties (match-beginning 1) (match-end 1))
+                                      (buffer-substring-no-properties (match-beginning 2) (match-end 2)))
+                                headers))
+            (forward-line))
+          (when (looking-at "^\\s-*$")
+            (forward-line))
+          (let* ((entity (buffer-substring (point) (restclient-current-max)))
+                 (vars (restclient-find-vars-before-point))
+                 (url (restclient-replace-all-in-string vars url))
+                 (headers (restclient-replace-all-in-headers vars headers))
+                 (entity (restclient-replace-all-in-string vars entity))
+                 (result (list method url headers entity)))
+            (if restclient-log-request
+                (message "HTTP %s %s Headers:[%s] Body:[%s]" method url headers entity))
+            (list method url headers entity)))
+      (user-error "No http query near point"))))
+
+(defun restclient-query-to-curl (method url headers entity)
+  (concat
+   (format "curl -i -X %s %s " method (url-encode-url url))
+   (mapconcat (lambda (x) (format "-H '%s: %s'" (car x) (cdr x))) headers " ")
+   (let ((inlined-entity (replace-regexp-in-string "\n" "" entity)))
+     (when (not  (string= "" inlined-entity))
+       (format " --data-binary '%s'" inlined-entity)))))
+
+;;;###autoload
+(defun restclient-http-send-current ()
+  (interactive)
+  (apply 'restclient-http-do (append (restclient-read-current-query) '(nil nil))))
 
 ;;;###autoload
 (defun restclient-http-send-current-raw ()
   (interactive)
-  (restclient-http-send-current t))
+  (apply 'restclient-http-do (append (restclient-read-current-query) '(t nil))))
 
 ;;;###autoload
 (defun restclient-http-send-current-stay-in-window ()
   (interactive)
-  (restclient-http-send-current nil t))
+  (apply 'restclient-http-do (append (restclient-read-current-query) '(nil t))))
+
+;;;###autoload
+(defun restclient-curl-to-kill-ring ()
+  (interactive)
+  (kill-new
+   (apply 'restclient-query-to-curl (restclient-read-current-query))))
 
 (defun restclient-jump-next ()
   (interactive)
@@ -377,6 +398,7 @@
   (local-set-key (kbd "C-c C-n") 'restclient-jump-next)
   (local-set-key (kbd "C-c C-p") 'restclient-jump-prev)
   (local-set-key (kbd "C-c C-.") 'restclient-mark-current)
+  (local-set-key (kbd "C-c C-l") 'restclient-curl-to-kill-ring)
   (set (make-local-variable 'comment-start) "# ")
   (set (make-local-variable 'comment-start-skip) "# *")
   (set (make-local-variable 'comment-column) 48)
