@@ -79,7 +79,7 @@
   "Send ARGS to URL as a POST request."
   (let ((url-request-method method)
         (url-request-extra-headers '())
-        (url-request-data entity))
+        (url-request-data (encode-coding-string entity 'utf-8)))
 
     (restclient-restore-header-variables)
 
