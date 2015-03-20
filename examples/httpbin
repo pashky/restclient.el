@@ -80,11 +80,27 @@ Authorization: :example-auth
 
 # Returns some XML
 GET http://httpbin.org/xml
-#
+
 # Test for unicode
 PUT http://httpbin.org/put
 Content-Type: application/json
 
 {
     "text": "\u2018a"
+}
+
+# Localhost bug test
+GET http://localhost:3000
+
+# Magic mode matching test
+GET http://httpbin.org/response-headers?Content-Type=whatever/braindamage
+
+# UTF-8 encoding test
+PUT http://httpbin.org/put
+Content-Type: application/json
+
+{
+    "text": "привет",
+    "text2": "João Sá",
+    "text3": "João"
 }
