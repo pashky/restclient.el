@@ -107,7 +107,7 @@
 
 (defun restclient-prettify-response (method url)
   (save-excursion
-    (let ((start (point)) (guessed-mode))
+    (let ((start (point)) (guessed-mode) (end-of-headers))
       (while (and (not (looking-at "^\\s-*$"))
                   (eq (progn
                         (when (looking-at restclient-content-type-regexp)
@@ -125,17 +125,18 @@
                                                      ("image/gif" . image-mode)
                         ("text/html" . html-mode))))))
                         (forward-line)) 0)))
+      (setq end-of-headers (point))
       (while (and (looking-at "^\\s-*$")
                   (eq (forward-line) 0)))
       (unless guessed-mode
         (setq guessed-mode
-              (assoc-default nil
-                             ;; magic mode matches
-                             '(("<\\?xml " . xml-mode)
-                               ("{\\s-*\"" . js-mode))
-                             (lambda (re _dummy)
-                               (looking-at re)))))
-      (let ((headers (buffer-substring-no-properties start (point))))
+              (or (assoc-default nil
+                                 ;; magic mode matches
+                                 '(("<\\?xml " . xml-mode)
+                                   ("{\\s-*\"" . js-mode))
+                                 (lambda (re _dummy)
+                                   (looking-at re))) 'js-mode)))
+      (let ((headers (buffer-substring-no-properties start end-of-headers)))
         (when guessed-mode
           (delete-region start (point))
           (unless (eq guessed-mode 'image-mode)
@@ -153,19 +154,17 @@
             (let* ((img (buffer-string)))
               (delete-region (point-min) (point-max))
               (fundamental-mode)
-              (insert-image (create-image img nil t))
-
-              ))
+              (insert-image (create-image img nil t))))
 
            ((eq guessed-mode 'js-mode)
             (let ((json-special-chars (remq (assoc ?/ json-special-chars) json-special-chars)))
-              (json-pretty-print-buffer))
-            (restclient-prettify-json-unicode)
-            ))
+              (ignore-errors (json-pretty-print-buffer)))
+            (restclient-prettify-json-unicode)))
 
           (goto-char (point-max))
+          (or (eq (point) (point-min)) (insert "\n"))
           (let ((hstart (point)))
-            (insert "\n" method " " url "\n" headers)
+            (insert method " " url "\n" headers)
             (insert (format "Request duration: %fs\n" (float-time (time-subtract restclient-request-time-end restclient-request-time-start))))
             (unless (eq guessed-mode 'image-mode)
               (comment-region hstart (point))
