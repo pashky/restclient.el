@@ -108,24 +108,25 @@
 (defun restclient-prettify-response (method url)
   (save-excursion
     (let ((start (point)) (guessed-mode))
-      (while (not (looking-at "^\\s-*$"))
-        (when (looking-at restclient-content-type-regexp)
-          (setq guessed-mode
-                (cdr (assoc-string (concat
-				    (buffer-substring-no-properties (match-beginning 1) (match-end 1))
-				    "/"
-				    (buffer-substring-no-properties (match-beginning 2) (match-end 2))
-				    )
-                      '(("text/xml" . xml-mode)
-                        ("application/xml" . xml-mode)
-                        ("application/json" . js-mode)
-                        ("image/png" . image-mode)
-                        ("image/jpeg" . image-mode)
-                        ("image/gif" . image-mode)
+      (while (and (not (looking-at "^\\s-*$"))
+                  (eq (progn
+                        (when (looking-at restclient-content-type-regexp)
+                          (setq guessed-mode
+                                (cdr (assoc-string (concat
+                                                    (buffer-substring-no-properties (match-beginning 1) (match-end 1))
+                                                    "/"
+                                                    (buffer-substring-no-properties (match-beginning 2) (match-end 2))
+                                                    )
+                                                   '(("text/xml" . xml-mode)
+                                                     ("application/xml" . xml-mode)
+                                                     ("application/json" . js-mode)
+                                                     ("image/png" . image-mode)
+                                                     ("image/jpeg" . image-mode)
+                                                     ("image/gif" . image-mode)
                         ("text/html" . html-mode))))))
-        (forward-line))
-      (while (looking-at "^\\s-*$")
-        (forward-line))
+                        (forward-line)) 0)))
+      (while (and (looking-at "^\\s-*$")
+                  (eq (forward-line) 0)))
       (unless guessed-mode
         (setq guessed-mode
               (assoc-default nil
