@@ -255,7 +255,7 @@
 (defun restclient-current-max ()
   (save-excursion
     (if (re-search-forward "^#" (point-max) t)
-        (point-at-bol)
+        (max (- (point-at-bol) 1) 1)
       (point-max))))
 
 (defun restclient-replace-all-in-string (replacements s)
