@@ -122,6 +122,7 @@
                                                      ("application/json" . js-mode)
                                                      ("image/png" . image-mode)
                                                      ("image/jpeg" . image-mode)
+                                                     ("image/jpg" . image-mode)
                                                      ("image/gif" . image-mode)
                         ("text/html" . html-mode))))))
                         (forward-line)) 0)))
