@@ -104,3 +104,8 @@ Content-Type: application/json
     "text2": "João Sá",
     "text3": "João"
 }
+#
+POST http://httpbin.org/post
+
+pwd=1234
+#
