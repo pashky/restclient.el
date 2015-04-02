@@ -77,6 +77,8 @@
 
 (defun restclient-http-do (method url headers entity raw stay-in-window)
   "Send ARGS to URL as a POST request."
+  (if restclient-log-request
+      (message "HTTP %s %s Headers:[%s] Body:[%s]" method url headers entity))
   (let ((url-request-method method)
         (url-request-extra-headers '())
         (url-request-data (encode-coding-string entity 'utf-8)))
@@ -288,9 +290,7 @@
 (defun restclient-eval-var (string)
   (with-output-to-string (princ (eval (read string)))))
 
-;;;###autoload
-(defun restclient-http-send-current (&optional raw stay-in-window)
-  (interactive)
+(defun restclient-http-parse-current-and-do (func &rest args)
   (save-excursion
     (goto-char (restclient-current-min))
     (when (re-search-forward restclient-method-url-regexp (point-max) t)
@@ -310,9 +310,33 @@
                (url (restclient-replace-all-in-string vars url))
                (headers (restclient-replace-all-in-headers vars headers))
                (entity (restclient-replace-all-in-string vars entity)))
-          (if restclient-log-request
-            (message "HTTP %s %s Headers:[%s] Body:[%s]" method url headers entity))
-          (restclient-http-do method url headers entity raw stay-in-window))))))
+          (apply func method url headers entity args))))))
+
+(defun restclient-format-curl-headers (headers)
+  "formats zero or more headers for use in a curl command"
+  (mapconcat (lambda (header)
+               (format "-H '%s: %s'" (car header) (cdr header))) headers " "))
+
+(defun restclient-format-curl-entity (entity)
+  "formats the request's entity for use in a curl command"
+  (if (> (string-width entity) 0)
+      (format "-d '%s'" entity) ""))
+
+(defun restclient-copy-curl-command ()
+  "formats the request as a curl command and copies the command to the clipboard"
+  (interactive)
+  (restclient-http-parse-current-and-do
+   '(lambda (method url headers entity)
+      (kill-new (format "curl -i %s -X%s '%s' %s"
+                        (restclient-format-curl-headers headers)
+                        method url
+                        (restclient-format-curl-entity entity)))
+      (message "curl command copied to clipboard."))))
+
+;;;###autoload
+(defun restclient-http-send-current (&optional raw stay-in-window)
+  (interactive)
+  (restclient-http-parse-current-and-do 'restclient-http-do raw stay-in-window))
 
 ;;;###autoload
 (defun restclient-http-send-current-raw ()
@@ -378,6 +402,7 @@
   (local-set-key (kbd "C-c C-n") 'restclient-jump-next)
   (local-set-key (kbd "C-c C-p") 'restclient-jump-prev)
   (local-set-key (kbd "C-c C-.") 'restclient-mark-current)
+  (local-set-key (kbd "C-c C-u") 'restclient-copy-curl-command)
   (set (make-local-variable 'comment-start) "# ")
   (set (make-local-variable 'comment-start-skip) "# *")
   (set (make-local-variable 'comment-column) 48)
