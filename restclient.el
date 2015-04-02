@@ -312,25 +312,16 @@
                (entity (restclient-replace-all-in-string vars entity)))
           (apply func method url headers entity args))))))
 
-(defun restclient-format-curl-headers (headers)
-  "formats zero or more headers for use in a curl command"
-  (mapconcat (lambda (header)
-               (format "-H '%s: %s'" (car header) (cdr header))) headers " "))
-
-(defun restclient-format-curl-entity (entity)
-  "formats the request's entity for use in a curl command"
-  (if (> (string-width entity) 0)
-      (format "-d '%s'" entity) ""))
-
 (defun restclient-copy-curl-command ()
   "formats the request as a curl command and copies the command to the clipboard"
   (interactive)
   (restclient-http-parse-current-and-do
    '(lambda (method url headers entity)
       (kill-new (format "curl -i %s -X%s '%s' %s"
-                        (restclient-format-curl-headers headers)
+                        (mapconcat (lambda (header) (format "-H '%s: %s'" (car header) (cdr header))) headers " ")
                         method url
-                        (restclient-format-curl-entity entity)))
+                        (if (> (string-width entity) 0)
+                            (format "-d '%s'" entity) "")))
       (message "curl command copied to clipboard."))))
 
 ;;;###autoload
