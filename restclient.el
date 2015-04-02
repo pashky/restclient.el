@@ -75,7 +75,7 @@
   (setq url-mime-accept-string nil)
   (setq url-personal-mail-address nil))
 
-(defun restclient-http-do (method url headers entity raw stay-in-window)
+(defun restclient-http-do (method url headers entity &rest handle-args)
   "Send ARGS to URL as a POST request."
   (if restclient-log-request
       (message "HTTP %s %s Headers:[%s] Body:[%s]" method url headers entity))
@@ -101,9 +101,9 @@
     (setq restclient-within-call t)
     (setq restclient-request-time-start (current-time))
     (url-retrieve url 'restclient-http-handle-response
-                  (list method url (if restclient-same-buffer-response
+                  (append (list method url (if restclient-same-buffer-response
                             restclient-same-buffer-response-name
-                          (format "*HTTP %s %s*" method url)) raw stay-in-window) nil restclient-inhibit-cookies)))
+                          (format "*HTTP %s %s*" method url))) handle-args) nil restclient-inhibit-cookies)))
 
 (defvar restclient-content-type-regexp "^Content-[Tt]ype: \\(\\w+\\)/\\(?:[^\\+\r\n]*\\+\\)*\\([^;\r\n]+\\)")
 
