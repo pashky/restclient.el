@@ -187,11 +187,11 @@
   (if (= (point-min) (point-max))
       (signal (car (plist-get status :error)) (cdr (plist-get status :error)))
     (restclient-restore-header-variables)
-    (if restclient-same-buffer-response
-        (if (get-buffer restclient-same-buffer-response-name)
-            (kill-buffer restclient-same-buffer-response-name)))
     (when (buffer-live-p (current-buffer))
-      (with-current-buffer (restclient-decode-response (current-buffer) bufname)
+      (with-current-buffer (restclient-decode-response
+                            (current-buffer)
+                            bufname
+                            restclient-same-buffer-response)
         (unless raw
           (restclient-prettify-response method url))
         (buffer-enable-undo)
@@ -200,7 +200,7 @@
             (display-buffer (current-buffer) t)
           (switch-to-buffer-other-window (current-buffer)))))))
 
-(defun restclient-decode-response (raw-http-response-buffer target-buffer-name)
+(defun restclient-decode-response (raw-http-response-buffer target-buffer-name uniq)
   "Decode the HTTP response using the charset (encoding) specified in the
    Content-Type header. If no charset is specified, default to UTF-8."
   (let* ((charset-regexp "Content-Type.*charset=\\([-A-Za-z0-9]+\\)")
@@ -219,11 +219,13 @@
       ;; Else, switch to the new, empty buffer that will contain the decoded HTTP
       ;; response. Set its encoding, copy the content from the unencoded
       ;; HTTP response buffer and decode.
-      (let ((decoded-http-response-buffer (get-buffer-create
-                                           (generate-new-buffer-name target-buffer-name))))
+      (let ((decoded-http-response-buffer
+             (get-buffer-create
+              (if uniq target-buffer-name (generate-new-buffer-name target-buffer-name)))))
         (with-current-buffer decoded-http-response-buffer
           (setq buffer-file-coding-system encoding)
           (save-excursion
+            (erase-buffer)
             (insert-buffer-substring raw-http-response-buffer))
           (kill-buffer raw-http-response-buffer)
           (condition-case nil
