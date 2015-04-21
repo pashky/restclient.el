@@ -176,7 +176,7 @@
 (defun restclient-prettify-json-unicode ()
   (save-excursion
     (goto-char (point-min))
-    (while (re-search-forward "\\\\[Uu]\\([0-9a-fA-F]\\{4\\}+\\)" nil t)
+    (while (re-search-forward "\\\\[Uu]\\([0-9a-fA-F]\\{4\\}\\)" nil t)
       (replace-match (char-to-string (decode-char 'ucs (string-to-number (match-string 1) 16))) t nil))))
 
 (defun restclient-http-handle-response (status method url bufname raw stay-in-window)
