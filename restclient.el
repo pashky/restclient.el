@@ -200,7 +200,7 @@
             (display-buffer (current-buffer) t)
           (switch-to-buffer-other-window (current-buffer)))))))
 
-(defun restclient-decode-response (raw-http-response-buffer target-buffer-name uniq)
+(defun restclient-decode-response (raw-http-response-buffer target-buffer-name same-name)
   "Decode the HTTP response using the charset (encoding) specified in the
    Content-Type header. If no charset is specified, default to UTF-8."
   (let* ((charset-regexp "Content-Type.*charset=\\([-A-Za-z0-9]+\\)")
@@ -221,7 +221,7 @@
       ;; HTTP response buffer and decode.
       (let ((decoded-http-response-buffer
              (get-buffer-create
-              (if uniq target-buffer-name (generate-new-buffer-name target-buffer-name)))))
+              (if same-name target-buffer-name (generate-new-buffer-name target-buffer-name)))))
         (with-current-buffer decoded-http-response-buffer
           (setq buffer-file-coding-system encoding)
           (save-excursion
