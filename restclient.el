@@ -265,7 +265,7 @@
   (if replacements
       (replace-regexp-in-string (regexp-opt (mapcar 'car replacements))
                                 (lambda (key) (cdr (assoc key replacements)))
-                                s)
+                                s nil t)
     s))
 
 (defun restclient-replace-all-in-header (replacements header)

@@ -109,3 +109,7 @@ POST http://httpbin.org/post
 
 pwd=1234
 #
+:foo = foo\bar
+POST http://httpbin.org/post
+
+:foo
