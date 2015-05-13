@@ -46,6 +46,9 @@
 (defvar restclient-response-loaded-hook nil
   "Hook run after response buffer created and data loaded.")
 
+(defvar restclient-http-do-hook nil
+  "Hook to run before making request.")
+
 ;; The following disables the interactive request for user name and
 ;; password should an API call encounter a permission-denied response.
 ;; This API is meant to be usable without constant asking for username
@@ -100,6 +103,7 @@
 
     (setq restclient-within-call t)
     (setq restclient-request-time-start (current-time))
+    (run-hooks 'restclient-http-do-hook)
     (url-retrieve url 'restclient-http-handle-response
                   (append (list method url (if restclient-same-buffer-response
                             restclient-same-buffer-response-name
