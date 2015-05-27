@@ -13,7 +13,11 @@ You can easily install `restclient` using `package.el` from [MELPA](http://melpa
 Alternatively, deploy `restclient.el` into your site-lisp as usual,
 then add `(require 'restclient)` to your Emacs start-up file.
 
-Once installed, you can prepare a text file with queries.
+Once installed, you can prepare a text file with queries. It is also possible to add
+
+    (add-to-list 'auto-mode-alist '("\.rest$" . restclient-mode))
+
+to the Emacs start-up file to automatically activate the restclient mode for files ending with the ".rest" extension.
 
 `restclient-mode` is a major mode which does a bit of highlighting
 and supports a few additional keypresses:
