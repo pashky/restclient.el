@@ -332,6 +332,15 @@
       (message "curl command copied to clipboard."))))
 
 ;;;###autoload
+(defun restclient-new-buffer ()
+  (interactive)
+  (let ((buffer (generate-new-buffer "*rest-client*")))
+    (with-current-buffer buffer
+      (insert "# -*- restclient -*- \n\n")
+      (restclient-mode)
+      (pop-to-buffer buffer))))
+
+;;;###autoload
 (defun restclient-http-send-current (&optional raw stay-in-window)
   (interactive)
   (restclient-http-parse-current-and-do 'restclient-http-do raw stay-in-window))
