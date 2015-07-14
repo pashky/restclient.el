@@ -251,6 +251,10 @@
 (defconst restclient-evar-regexp
   "^\\(:[^: ]+\\)\\s-+:=\\s-+\\(.+\\)$")
 
+(defun restclient-goto-current-min ()
+  (interactive)
+  (goto-char (restclient-current-min)))
+
 (defun restclient-current-min ()
   (save-excursion
     (beginning-of-line)
@@ -296,12 +300,12 @@
 (defun restclient-eval-var (string)
   (with-output-to-string (princ (eval (read string)))))
 
-(defun restclient-http-parse-current-and-do (func &rest args)
+(defun restclient-http-parse-current ()
   (save-excursion
     (goto-char (restclient-current-min))
     (when (re-search-forward restclient-method-url-regexp (point-max) t)
-      (let ((method (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
-            (url (buffer-substring-no-properties (match-beginning 2) (match-end 2)))
+      (let ((method (match-string-no-properties 1))
+            (url (match-string-no-properties 2))
             (headers '()))
         (forward-line)
         (while (re-search-forward restclient-header-regexp (point-at-eol) t)
@@ -317,7 +321,12 @@
                (url (restclient-replace-all-in-string vars url))
                (headers (restclient-replace-all-in-headers vars headers))
                (entity (restclient-replace-all-in-string vars entity)))
-          (apply func method url headers entity args))))))
+          (list method url headers entity))))))
+
+(defun restclient-http-parse-current-and-do (func &rest args)
+  (cl-destructuring-bind (method url headers entity)
+      (restclient-http-parse-current)
+    (apply func method url headers entity args)))
 
 (defun restclient-copy-curl-command ()
   "formats the request as a curl command and copies the command to the clipboard"
@@ -353,7 +362,57 @@
       (goto-char (restclient-current-min))
       (setq last-min (point))))
   (goto-char (restclient-current-max))
+  (unless (eobp) (forward-char))
   (goto-char (restclient-current-min)))
+
+(defun restclient-current-comment ()
+  (save-excursion
+    (let ((current-min (restclient-current-min))
+          (previous-max (progn (restclient-jump-prev)
+                               (restclient-current-max))))
+      (when (> current-min previous-max)
+        (goto-char previous-max)
+        (re-search-forward "^#" current-min t)
+        (beginning-of-line)
+        (while (looking-at "^#")
+          (forward-line)
+          (beginning-of-line))
+        (buffer-substring-no-properties previous-max (point))))))
+
+(defun restclient-create-imenu-index-function ()
+  (save-excursion
+    (beginning-of-buffer)
+    (let ((last -1) heading)
+      (cl-loop while (< last (point))
+               do
+               (progn
+                 (setq last (point))
+                 (setq marker (point-marker))
+                 (setq heading (restclient-create-imenu-index-heading))
+                 (message heading)
+                 (restclient-jump-next)
+                 )
+               when heading
+               collect `(,heading . ,marker)))))
+
+(defun restclient-create-imenu-index-heading ()
+  (save-excursion
+    (let ((current-comment (restclient-oneline-comment)))
+      (when current-comment
+        (let ((method (progn (restclient-current-min)
+                             (re-search-forward restclient-method-url-regexp (point-max) t)
+                             (match-string-no-properties 1)))
+              (url (match-string-no-properties 2)))
+          (format "%s %s (%s)" method url current-comment))))))
+
+(defun restclient-oneline-comment ()
+  (let* ((original-comment (restclient-current-comment))
+         (res (when original-comment (replace-regexp-in-string "\n" "|" original-comment))))
+    (when res
+      (cl-loop for string-to-remove in '("#" "^|" "^ " "|$")
+               do
+               (setq res (replace-regexp-in-string string-to-remove "" res))))
+        res))
 
 (defun restclient-jump-prev ()
   (interactive)
@@ -367,9 +426,8 @@
                      (forward-line -1)
                      (beginning-of-line))
                    (point)))))
-    (unless (eq (point-min) end-of-entity)
       (goto-char end-of-entity)
-      (goto-char (restclient-current-min)))))
+      (goto-char (restclient-current-min))))
 
 (defun restclient-mark-current ()
   (interactive)
