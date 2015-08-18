@@ -379,7 +379,7 @@
           (beginning-of-line))
         (buffer-substring-no-properties previous-max (point))))))
 
-(defun restclient-create-imenu-index-function ()
+(defun restclient-create-imenu-index ()
   (save-excursion
     (beginning-of-buffer)
     (let ((last -1) heading)
@@ -462,7 +462,7 @@
   (set (make-local-variable 'comment-start) "# ")
   (set (make-local-variable 'comment-start-skip) "# *")
   (set (make-local-variable 'comment-column) 48)
-
+  (set (make-local-variable 'imenu-create-index-function) #'restclient-create-imenu-index)
   (set (make-local-variable 'font-lock-defaults) '(restclient-mode-keywords)))
 
 
