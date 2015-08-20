@@ -25,11 +25,11 @@
 ;; Boston, MA 02110-1301, USA.
 
 ;;; Commentary:
-
+;; This is a very simple first iteration at integrating restclient.el
+;; and org-mode.
 
 ;;; Requirements:
-
-;; restclient-mode
+;; restclient.el
 
 ;;; Code:
 (require 'ob)
