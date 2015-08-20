@@ -190,7 +190,7 @@
     (while (re-search-forward "\\\\[Uu]\\([0-9a-fA-F]\\{4\\}\\)" nil t)
       (replace-match (char-to-string (decode-char 'ucs (string-to-number (match-string 1) 16))) t nil))))
 
-(defun restclient-http-handle-response (status method url bufname raw stay-in-window)
+(defun restclient-http-handle-response (status method url bufname raw stay-in-window &optional results-buffer)
   "Switch to the buffer returned by `url-retreive'.
 The buffer contains the raw HTTP response sent by the server."
   (setq restclient-within-call nil)
@@ -207,9 +207,11 @@ The buffer contains the raw HTTP response sent by the server."
           (restclient-prettify-response method url))
         (buffer-enable-undo)
         (run-hooks 'restclient-response-loaded-hook)
-        (if stay-in-window
-            (display-buffer (current-buffer) t)
-          (switch-to-buffer-other-window (current-buffer)))))))
+        (if results-buffer
+            (copy-to-buffer results-buffer (point-min) (point-max))
+          (if stay-in-window
+              (display-buffer (current-buffer) t)
+            (switch-to-buffer-other-window (current-buffer))))))))
 
 (defun restclient-decode-response (raw-http-response-buffer target-buffer-name same-name)
   "Decode the HTTP response using the charset (encoding) specified in the Content-Type header. If no charset is specified, default to UTF-8."
