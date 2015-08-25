@@ -56,6 +56,9 @@
 (defvar restclient-http-do-hook nil
   "Hook to run before making request.")
 
+(defvar restclient-overlay nil
+  "Overlay used to highlight the current request.")
+
 ;; The following disables the interactive request for user name and
 ;; password should an API call encounter a permission-denied response.
 ;; This API is meant to be usable without constant asking for username
@@ -246,32 +249,69 @@ The buffer contains the raw HTTP response sent by the server."
           decoded-http-response-buffer)))))
 
 (defconst restclient-method-url-regexp
-  "^\\(GET\\|POST\\|DELETE\\|PUT\\|HEAD\\|OPTIONS\\|PATCH\\) \\(.*\\)$")
+  "\\(GET\\|POST\\|DELETE\\|PUT\\|HEAD\\|OPTIONS\\|PATCH\\) \\(.*\\)$")
 
 (defconst restclient-header-regexp
-  "^\\([^ :]+\\): \\(.*\\)$")
+  "\\([^ :]+\\): \\(.*\\)$")
 
 (defconst restclient-var-regexp
-  "^\\(:[^: ]+\\)\\s-+\\(:?\\)=\\s-+\\(.+\\)$")
+  "\\(:[^: ]+\\)\\s-+\\(:?\\)=\\s-+\\(.+\\)$")
 
 (defconst restclient-evar-regexp
-  "^\\(:[^: ]+\\)\\s-+:=\\s-+\\(.+\\)$")
+  "\\(:[^: ]+\\)\\s-+:=\\s-+\\(.+\\)$")
+
+(defvar restclient-common-prefix "^"
+  "Prefix regexp used to identify `restclient' lines of code when used with another major mode.")
+
+(put 'restclient-common-prefix 'safe-local-variable #'stringp)
+
+(defun restclient-method-url-regexp()
+  (concat restclient-common-prefix restclient-method-url-regexp))
+
+(defun restclient-header-regexp()
+  (concat restclient-common-prefix restclient-header-regexp))
+
+(defun restclient-var-regexp()
+  (concat restclient-common-prefix restclient-var-regexp))
+
+(defun restclient-evar-regexp()
+  (concat restclient-common-prefix restclient-evar-regexp))
 
 (defun restclient-current-min ()
   (save-excursion
     (beginning-of-line)
-    (if (looking-at "^#")
-        (if (re-search-forward "^[^#]" (point-max) t)
+    (if (looking-at (concat restclient-common-prefix "#"))
+        (if (re-search-forward (concat restclient-common-prefix "[^#]*?$") (point-max) t)
             (point-at-bol))
-      (if (re-search-backward "^#" (point-min) t)
+      (if (re-search-backward (concat restclient-common-prefix "#.*?$") (point-min) t)
           (point-at-bol 2)
-        (point-min)))))
+        (if (eq restclient-common-prefix "^")
+            (point-min)
+          (progn
+            (goto-char (point-min))
+            (if (re-search-forward (concat restclient-common-prefix "#.*?\n") (point-max) t)
+                (if (re-search-forward (concat restclient-common-prefix "[^#]*?$") (point-max) t)
+                    (point-at-bol)
+                  (error "Could not find current request"))
+                ;;(progn
+                ;;  (while (looking-at (concat restclient-common-prefix "#")) (forward-line 1))
+                ;;  (point-at-bol))
+              (error "Could not find current request"))))))))
 
 (defun restclient-current-max ()
   (save-excursion
-    (if (re-search-forward "^#" (point-max) t)
-        (max (- (point-at-bol) 1) 1)
-      (point-max))))
+    (beginning-of-line)
+    (if (looking-at (concat restclient-common-prefix "#"))
+        (forward-line 1))
+    (if (re-search-forward (concat restclient-common-prefix "#.*?$") (point-max) t)
+        (progn
+          (re-search-backward (concat restclient-common-prefix "[^#]*?\n") (point-min) t)
+          (point-at-bol 2))
+      (progn
+        (goto-char (point-max))
+        (re-search-backward (concat restclient-common-prefix ".*$") (point-min) t)
+        (point-at-bol 2))
+      )))
 
 (defun restclient-replace-all-in-string (replacements s)
   (if replacements
@@ -292,7 +332,7 @@ The buffer contains the raw HTTP response sent by the server."
         (bound (point)))
     (save-excursion
       (goto-char (point-min))
-      (while (search-forward-regexp restclient-var-regexp bound t)
+      (while (search-forward-regexp (restclient-var-regexp) bound t)
         (let ((name (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
               (should-eval (> (length (match-string 2)) 0))
               (value (buffer-substring-no-properties (match-beginning 3) (match-end 3))))
@@ -305,12 +345,12 @@ The buffer contains the raw HTTP response sent by the server."
 (defun restclient-http-parse-current-and-do (func &rest args)
   (save-excursion
     (goto-char (restclient-current-min))
-    (when (re-search-forward restclient-method-url-regexp (point-max) t)
+    (when (re-search-forward (restclient-method-url-regexp) (point-max) t)
       (let ((method (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
             (url (buffer-substring-no-properties (match-beginning 2) (match-end 2)))
             (headers '()))
         (forward-line)
-        (while (re-search-forward restclient-header-regexp (point-at-eol) t)
+        (while (re-search-forward (restclient-header-regexp) (point-at-eol) t)
           (setq headers (cons (cons (buffer-substring-no-properties (match-beginning 1) (match-end 1))
                                     (buffer-substring-no-properties (match-beginning 2) (match-end 2)))
                               headers))
@@ -360,44 +400,58 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
 (defun restclient-jump-next ()
   "Jump to next request in buffer."
   (interactive)
-  (let ((last-min nil))
-    (while (not (eq last-min (goto-char (restclient-current-min))))
-      (goto-char (restclient-current-min))
-      (setq last-min (point))))
-  (goto-char (restclient-current-max))
-  (goto-char (restclient-current-min)))
+  (if (re-search-forward (concat restclient-common-prefix "#.*?\n") (point-max) t)
+      (let ((curr-min (restclient-current-min)))
+        (goto-char curr-min)
+        (restclient-highlight-selection curr-min (restclient-current-max)))
+    (message "No more requests found.")))
 
 (defun restclient-jump-prev ()
   "Jump to previous request in buffer."
   (interactive)
-  (let* ((current-min (restclient-current-min))
-         (end-of-entity
-          (save-excursion
-            (progn (goto-char (restclient-current-min))
-                   (while (and (or (looking-at "^\s*\\(#.*\\)?$")
-                                   (eq (point) current-min))
-                               (not (eq (point) (point-min))))
+  (let* ((curr-min (restclient-current-min))
+         (prev-min (save-excursion
+                     (goto-char curr-min)
                      (forward-line -1)
-                     (beginning-of-line))
-                   (point)))))
-    (unless (eq (point-min) end-of-entity)
-      (goto-char end-of-entity)
-      (goto-char (restclient-current-min)))))
+                     (while (and (looking-at (concat restclient-common-prefix "#"))
+                                 (not (bobp)))
+                       (forward-line -1))
+                     (restclient-current-min))))
+    (if (eq curr-min prev-min)
+        (message "No previous request found.")
+      (progn
+        (goto-char prev-min)
+        (restclient-highlight-selection prev-min (restclient-current-max))))))
 
 (defun restclient-mark-current ()
   "Mark current request."
   (interactive)
   (goto-char (restclient-current-min))
-  (set-mark-command nil)
-  (goto-char (restclient-current-max))
-  (backward-char 1)
-  (setq deactivate-mark nil))
+  (restclient-highlight-selection
+   (restclient-current-min)
+   (restclient-current-max)))
+
+(defun restclient-highlight-selection (begin end &optional face)
+  "Highlight selection between BEGIN and END.
+Optional FACE can be specified, otherwise `highlight' is
+used by default."
+  (let ((hiface (or face 'highlight)))
+    (setq restclient-overlay (make-overlay begin end))
+    (overlay-put restclient-overlay 'face hiface)
+    (add-hook 'pre-command-hook 'restclient-remove-overlay)))
+
+(defun restclient-remove-overlay ()
+  "Remove overlay set by `restclient-highlight-selection'."
+  (delete-overlay restclient-overlay)
+  (setq restclient-overlay nil)
+  (remove-hook 'pre-command-hook 'restclient-remove-overlay))
+
 
 (defvar restclient-mode-keywords
-  (list (list restclient-method-url-regexp '(1 font-lock-keyword-face) '(2 font-lock-function-name-face))
-        (list restclient-header-regexp '(1 font-lock-variable-name-face) '(2 font-lock-string-face))
-        (list restclient-evar-regexp '(1 font-lock-preprocessor-face) '(2 font-lock-function-name-face))
-        (list restclient-var-regexp '(1 font-lock-preprocessor-face) '(3 font-lock-string-face))
+  (list (list (restclient-method-url-regexp) '(1 font-lock-keyword-face) '(2 font-lock-function-name-face))
+        (list (restclient-header-regexp) '(1 font-lock-variable-name-face) '(2 font-lock-string-face))
+        (list (restclient-evar-regexp) '(1 font-lock-preprocessor-face) '(2 font-lock-function-name-face))
+        (list (restclient-var-regexp) '(1 font-lock-preprocessor-face) '(3 font-lock-string-face))
         ))
 
 (defvar restclient-mode-syntax-table
