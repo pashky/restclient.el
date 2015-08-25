@@ -49,7 +49,7 @@ class WikipediaClient
      *
      * Issue the Emacs command
      *
-     ```lisp
+     * ```lisp
      * M-x restclient-http-send-current-stay-in-window
      * ```
      *
