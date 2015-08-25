@@ -4,13 +4,17 @@ This is a tool to manually explore and test HTTP REST webservices.
 Runs queries from a plain-text query sheet,
 displays results as a pretty-printed XML, JSON and even images.
 
+![](http://i.imgur.com/QtCID.png)
+
+### Inside another major mode ###
+
 It can also be used inside any programming major mode, like `python`,
 `php`, `javascrit` or `lisp`. This way, `restclient` can be used to
 test your services while you're developing them, or as a reference
 example when using thrid party REST APIs. See [WikipediaClient](examples/WikipediaClient.php)
 for more information.
 
-![](http://i.imgur.com/QtCID.png)
+![screenshot](examples/restclient-in-php.png)
 
 # Usage
 
