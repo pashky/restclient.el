@@ -46,6 +46,7 @@ class WikipediaClient
      * Example:
      * rc> # Get API article
      * rc> GET :wpedia?action=query&titles=Application_programming_interface&format=json
+     * rc> User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:31.0) Gecko/20100101 Firefox/31.0
      *
      * Issue the Emacs command
      *
