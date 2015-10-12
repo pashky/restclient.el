@@ -48,7 +48,7 @@ Query file example:
     #
     GET http://jira.atlassian.com/rest/api/latest/issue/JRA-9
     User-Agent: Emacs24
-    Accept-Encoding: application/xml
+    Accept-Encoding: compress, gzip
 
     #
     # Post works too, entity just goes after an empty line. Same is for PUT.
