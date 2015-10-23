@@ -364,7 +364,7 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
     (while (not (eq last-min (goto-char (restclient-current-min))))
       (goto-char (restclient-current-min))
       (setq last-min (point))))
-  (goto-char (restclient-current-max))
+  (goto-char (+ (restclient-current-max) 1))
   (goto-char (restclient-current-min)))
 
 (defun restclient-jump-prev ()
