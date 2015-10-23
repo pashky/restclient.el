@@ -262,7 +262,7 @@ The buffer contains the raw HTTP response sent by the server."
     (beginning-of-line)
     (if (looking-at "^#")
         (if (re-search-forward "^[^#]" (point-max) t)
-            (point-at-bol))
+            (point-at-bol) (point-max))
       (if (re-search-backward "^#" (point-min) t)
           (point-at-bol 2)
         (point-min)))))
