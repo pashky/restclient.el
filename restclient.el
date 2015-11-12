@@ -224,6 +224,10 @@ The buffer contains the raw HTTP response sent by the server."
         ;; Dont' attempt to decode. Instead, just switch to the raw HTTP response buffer and
         ;; rename it to target-buffer-name.
         (with-current-buffer raw-http-response-buffer
+          ;; We have to kill the target buffer if it exists, or `rename-buffer'
+          ;; will raise an error.
+          (when (get-buffer target-buffer-name)
+            (kill-buffer target-buffer-name))
           (rename-buffer target-buffer-name)
           raw-http-response-buffer)
       ;; Else, switch to the new, empty buffer that will contain the decoded HTTP
