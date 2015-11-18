@@ -24,6 +24,7 @@ and supports a few additional keypresses:
 - `C-c C-p`: jump to the previous query
 - `C-c C-n`: jump to the next query
 - `C-c C-.`: mark the query under the cursor
+- `C-c C-u`: copy query under the cursor as a curl command
 
 Query file example:
 
@@ -47,7 +48,7 @@ Query file example:
     #
     GET http://jira.atlassian.com/rest/api/latest/issue/JRA-9
     User-Agent: Emacs24
-    Accept-Encoding: application/xml
+    Accept-Encoding: compress, gzip
 
     #
     # Post works too, entity just goes after an empty line. Same is for PUT.
@@ -113,6 +114,45 @@ Instead, place them above your calls or in separate sections. Like in
 the example above.
 
 And be careful of what you put in that elisp. No security checks are done, so it can format your hardrive. If there's a parsing or evaluation error, it will tell you in the minibuffer.
+
+# Customization
+
+There are several variables available to customize `restclient` to your liking.
+
+### restclient-log-request
+
+__Default: t__
+
+Determines whether restclient logs to the \*Messages\* buffer.
+
+If non-nil, restclient requests will be logged. If nil, they will not be.
+
+### restclient-same-buffer-response
+
+__Default: t__
+
+Re-use same buffer for responses or create a new one each time.
+
+If non-nil, re-use the buffer named by `rest-client-buffer-response-name` for all requests.
+
+If nil, generate a buffer name based on the request type and url, and increment it for subsequent requests.
+
+For example, `GET http://example.org` would produce the following buffer names on 3 subsequent calls:
+- `*HTTP GET http://example.org*`
+- `*HTTP GET http://example.org*<2>`
+- `*HTTP GET http://example.org*<3>`
+
+### restclient-same-buffer-response-name
+
+__Default: \*HTTP Response\*__
+
+Name for response buffer to be used when `restclient-same-buffer-response` is true.
+
+### restclient-inhibit-cookies
+
+__Default: nil__
+
+Inhibit restclient from sending cookies implicitly.
 
 # Known issues
 
