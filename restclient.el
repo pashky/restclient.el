@@ -261,10 +261,6 @@ The buffer contains the raw HTTP response sent by the server."
 (defconst restclient-evar-regexp
   "^\\(:[^: ]+\\)\\s-+:=\\s-+\\(.+\\)$")
 
-(defun restclient-goto-current-min ()
-  (interactive)
-  (goto-char (restclient-current-min)))
-
 (defun restclient-current-min ()
   (save-excursion
     (beginning-of-line)
@@ -397,17 +393,15 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
 
 (defun restclient-create-imenu-index ()
   (save-excursion
-    (beginning-of-buffer)
-    (let ((last -1) heading)
+    (goto-char (point-min))
+    (let ((last -1) heading marker)
       (cl-loop while (< last (point))
                do
                (progn
                  (setq last (point))
                  (setq marker (point-marker))
                  (setq heading (restclient-create-imenu-index-heading))
-                 (message heading)
-                 (restclient-jump-next)
-                 )
+                 (restclient-jump-next))
                when heading
                collect `(,heading . ,marker)))))
 
@@ -443,8 +437,7 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
                      (forward-line -1)
                      (beginning-of-line))
                    (point)))))
-      (goto-char end-of-entity)
-      (goto-char (restclient-current-min))))
+      (goto-char end-of-entity)))
 
 (defun restclient-mark-current ()
   "Mark current request."
