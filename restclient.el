@@ -155,7 +155,10 @@
           (delete-region start (point))
           (unless (eq guessed-mode 'image-mode)
             (apply guessed-mode '())
-            (font-lock-fontify-buffer))
+            (if (fboundp 'font-lock-flush)
+                (font-lock-flush)
+              (with-no-warnings
+                (font-lock-fontify-buffer))))
 
           (cond
            ((eq guessed-mode 'xml-mode)
