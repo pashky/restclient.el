@@ -30,10 +30,12 @@ Query file example:
 
     # -*- restclient -*-
     #
-    # Gets user timeline, formats JSON, shows response status and headers underneath
+    # Gets  all Github APIs, formats JSON, shows response status and headers underneath.
+    # Also sends a User-Agent header, because the Github API requires this.
     #
-    #
-    GET http://api.twitter.com/1/statuses/user_timeline.json?screen_name=twitterapi&count=2
+    GET https://api.github.com
+    User-Agent: Emacs Restclient
+
     #
     # XML is supported - highlight, pretty-print
     #
