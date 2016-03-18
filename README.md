@@ -162,6 +162,9 @@ Inhibit restclient from sending cookies implicitly.
 but may use more unique separator in future.
 - I'm not sure if it handles different encodings, I suspect it won't play well with anything non-ascii. I'm yet to figure it out.
 - Variables usages are not highlighted
+- Due to a [bug](http://debbugs.gnu.org/cgi/bugreport.cgi?bug=17976) in
+  Emacs/url.el, some GET requests to `localhost` might fail. As a workaround you
+  can use `127.0.0.1` instead of `localhost` until this is fixed.
 
 # License
 
