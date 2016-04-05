@@ -92,30 +92,53 @@ or like this:
 
 In second form, the value of variable is evaluated as Emacs Lisp form immediately. Evaluation of variables is done from top to bottom. Only one one-line form for each variable is allowed, so use `(progn ...)` and some virtual line wrap mode if you need more. There's no way to reference earlier declared _restclient_ variables, but you can always use `setq` to save state.
 
+Variables can be multiline too:
+
+    :myvar = <<
+    Authorization: :my-auth
+    Content-Type: application/json
+    User-Agent: SomeApp/1.0
+    #
+
+or
+
+    :myvar := <<
+    (some-long-elisp
+        (code spanning many lines)
+    #
+
+`<<` is used to mark a start of multiline value, the actual value is starting on the next line then. The end of such variable value is the same comment marker `#` and last end of line doesn't count, same is for request bodies.
+
 After the var is declared, you can use it in the URL, the header values
 and the body.
 
     # Some generic vars
 
     :my-auth = 319854857345898457457
-
+    :my-headers = <<
+    Authorization: :my-auth
+    Content-Type: application/json
+    User-Agent: SomeApp/1.0
+    #
+    
     # Update a user's name
 
     :user-id = 7
     :the-name := (format "%s %s %d" 'Neo (md5 "The Chosen") (+ 100 1))
 
     PUT http://localhost:4000/users/:user-id/
-    Authorization: :my-auth
+    :my-headers
 
     { "name": ":the-name" }
 
-Warning: If you include var declarations as part of the request, in
-the body or headers, it will be sent along.
+### Caveats:
 
-Instead, place them above your calls or in separate sections. Like in
-the example above.
-
-And be careful of what you put in that elisp. No security checks are done, so it can format your hardrive. If there's a parsing or evaluation error, it will tell you in the minibuffer.
+- Multiline variables can be used in headers or body. In URL too, but it doesn't make sense unless it was long elisp expression evaluating to simple value.
+- Yet same variable cannot contain both headers and body, it must be split into two and separated by empty line as usual.
+- Variables now can reference each other, substitution happens in several passes and stops when there's no more variables. Please avoid circular references. There's customizable safeguard of maximum 10 passes to prevent hanging in this case, but it will slow things down.
+- Variable declaration only considered above request line.
+- Be careful of what you put in that elisp. No security checks are done, so it can format your hardrive. If there's a parsing or evaluation error, it will tell you in the minibuffer.
+- Elisp variables can evaluate to values containing other variable references, this will be substituted too. But you cannot substitute parts of elisp expressions.
 
 # Customization
 
@@ -161,7 +184,7 @@ Inhibit restclient from sending cookies implicitly.
 - Comment lines `#` act as end of entity. Yes, that means you can't post shell script or anything with hashes as PUT/POST entity. I'm fine with this right now,
 but may use more unique separator in future.
 - I'm not sure if it handles different encodings, I suspect it won't play well with anything non-ascii. I'm yet to figure it out.
-- Variables usages are not highlighted
+- Variable usages are not highlighted
 - Due to a [bug](http://debbugs.gnu.org/cgi/bugreport.cgi?bug=17976) in
   Emacs/url.el, some GET requests to `localhost` might fail. As a workaround you
   can use `127.0.0.1` instead of `localhost` until this is fixed.

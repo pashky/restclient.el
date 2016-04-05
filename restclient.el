@@ -56,6 +56,40 @@
 (defvar restclient-http-do-hook nil
   "Hook to run before making request.")
 
+(defcustom restclient-vars-max-passes 10
+  "Maximum number of recursive variable references. This is to prevent hanging if two variables reference each other directly or indirectly."
+  :group 'restclient
+  :type 'integer)
+
+(defconst restclient-comment-separator "#")
+(defconst restclient-comment-start-regexp (concat "^" restclient-comment-separator))
+(defconst restclient-comment-not-regexp (concat "^[^" restclient-comment-separator "]"))
+(defconst restclient-empty-line-regexp "^\\s-*$")
+
+(defconst restclient-method-url-regexp
+  "^\\(GET\\|POST\\|DELETE\\|PUT\\|HEAD\\|OPTIONS\\|PATCH\\) \\(.*\\)$")
+
+(defconst restclient-header-regexp
+  "^\\([^ :]+\\): \\(.*\\)$")
+
+(defconst restclient-use-var-regexp
+  "^\\(:[^: \n]+\\)$")
+
+(defconst restclient-var-regexp
+  (concat "^\\(:[^: ]+\\)[ \t]*\\(:?\\)=[ \t]*\\(<<[ \t]*\n\\(\\(.*\n\\)*?\\)" restclient-comment-separator "\\|\\([^<].*\\)$\\)"))
+
+(defconst restclient-svar-regexp
+  "^\\(:[^: ]+\\)[ \t]*=[ \t]*\\(.+?\\)$")
+
+(defconst restclient-evar-regexp
+  "^\\(:[^: ]+\\)[ \t]*:=[ \t]*\\(.+?\\)$")
+
+(defconst restclient-mvar-regexp
+  "^\\(:[^: ]+\\)[ \t]*:?=[ \t]*\\(<<\\)[ \t]*$")
+
+(defconst restclient-content-type-regexp
+  "^Content-[Tt]ype: \\(\\w+\\)/\\(?:[^\\+\r\n]*\\+\\)*\\([^;\r\n]+\\)")
+
 ;; The following disables the interactive request for user name and
 ;; password should an API call encounter a permission-denied response.
 ;; This API is meant to be usable without constant asking for username
@@ -116,20 +150,17 @@
                             restclient-same-buffer-response-name
                           (format "*HTTP %s %s*" method url))) handle-args) nil restclient-inhibit-cookies)))
 
-(defvar restclient-content-type-regexp "^Content-[Tt]ype: \\(\\w+\\)/\\(?:[^\\+\r\n]*\\+\\)*\\([^;\r\n]+\\)")
-
 (defun restclient-prettify-response (method url)
   (save-excursion
     (let ((start (point)) (guessed-mode) (end-of-headers))
-      (while (and (not (looking-at "^\\s-*$"))
+      (while (and (not (looking-at restclient-empty-line-regexp))
                   (eq (progn
                         (when (looking-at restclient-content-type-regexp)
                           (setq guessed-mode
                                 (cdr (assoc-string (concat
-                                                    (buffer-substring-no-properties (match-beginning 1) (match-end 1))
+                                                    (match-string-no-properties 1)
                                                     "/"
-                                                    (buffer-substring-no-properties (match-beginning 2) (match-end 2))
-                                                    )
+                                                    (match-string-no-properties 2))
                                                    '(("text/xml" . xml-mode)
                                                      ("application/xml" . xml-mode)
                                                      ("application/json" . js-mode)
@@ -140,7 +171,7 @@
                         ("text/html" . html-mode))))))
                         (forward-line)) 0)))
       (setq end-of-headers (point))
-      (while (and (looking-at "^\\s-*$")
+      (while (and (looking-at restclient-empty-line-regexp)
                   (eq (forward-line) 0)))
       (unless guessed-mode
         (setq guessed-mode
@@ -252,47 +283,43 @@ The buffer contains the raw HTTP response sent by the server."
                               (symbol-name encoding)))))
           decoded-http-response-buffer)))))
 
-(defconst restclient-method-url-regexp
-  "^\\(GET\\|POST\\|DELETE\\|PUT\\|HEAD\\|OPTIONS\\|PATCH\\) \\(.*\\)$")
-
-(defconst restclient-header-regexp
-  "^\\([^ :]+\\): \\(.*\\)$")
-
-(defconst restclient-var-regexp
-  "^\\(:[^: ]+\\)\\s-+\\(:?\\)=\\s-+\\(.+\\)$")
-
-(defconst restclient-evar-regexp
-  "^\\(:[^: ]+\\)\\s-+:=\\s-+\\(.+\\)$")
-
 (defun restclient-current-min ()
   (save-excursion
     (beginning-of-line)
-    (if (looking-at "^#")
-        (if (re-search-forward "^[^#]" (point-max) t)
+    (if (looking-at restclient-comment-start-regexp)
+        (if (re-search-forward restclient-comment-not-regexp (point-max) t)
             (point-at-bol) (point-max))
-      (if (re-search-backward "^#" (point-min) t)
+      (if (re-search-backward restclient-comment-start-regexp (point-min) t)
           (point-at-bol 2)
         (point-min)))))
 
 (defun restclient-current-max ()
   (save-excursion
-    (if (re-search-forward "^#" (point-max) t)
+    (if (re-search-forward restclient-comment-start-regexp (point-max) t)
         (max (- (point-at-bol) 1) 1)
       (point-max))))
 
-(defun restclient-replace-all-in-string (replacements s)
+(defun restclient-replace-all-in-string (replacements string)
   (if replacements
-      (replace-regexp-in-string (regexp-opt (mapcar 'car replacements))
-                                (lambda (key) (cdr (assoc key replacements)))
-                                s nil t)
-    s))
+      (let ((current string)
+            (pass restclient-vars-max-passes)
+            (continue t))
+        (while (and continue (> pass 0))
+          (setq pass (- pass 1))
+          (setq current (replace-regexp-in-string (regexp-opt (mapcar 'car replacements))
+                                                  (lambda (key)
+                                                    (setq continue t)
+                                                    (cdr (assoc key replacements)))
+                                                  current nil t)))
+        current)
+    string))
 
 (defun restclient-replace-all-in-header (replacements header)
   (cons (car header)
         (restclient-replace-all-in-string replacements (cdr header))))
 
-(defun restclient-replace-all-in-headers (replacements headers)
-  (mapcar (apply-partially 'restclient-replace-all-in-header replacements) headers))
+(defun restclient-chop (text)
+  (if text (replace-regexp-in-string "\n$" "" text) nil))
 
 (defun restclient-find-vars-before-point ()
   (let ((vars nil)
@@ -300,35 +327,47 @@ The buffer contains the raw HTTP response sent by the server."
     (save-excursion
       (goto-char (point-min))
       (while (search-forward-regexp restclient-var-regexp bound t)
-        (let ((name (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
+        (let ((name (match-string-no-properties 1))
               (should-eval (> (length (match-string 2)) 0))
-              (value (buffer-substring-no-properties (match-beginning 3) (match-end 3))))
+              (value (or (restclient-chop (match-string-no-properties 4)) (match-string-no-properties 3))))
           (setq vars (cons (cons name (if should-eval (restclient-eval-var value) value)) vars))))
       vars)))
 
 (defun restclient-eval-var (string)
   (with-output-to-string (princ (eval (read string)))))
 
+(defun restclient-make-header (&optional string)
+  (cons (match-string-no-properties 1 string)
+        (match-string-no-properties 2 string)))
+
+(defun restclient-parse-headers (string)
+  (let ((start 0)
+        (headers '()))
+    (while (string-match restclient-header-regexp string start)
+        (setq headers (cons (restclient-make-header string) headers)
+              start (match-end 0)))
+    headers))
+
 (defun restclient-http-parse-current-and-do (func &rest args)
   (save-excursion
     (goto-char (restclient-current-min))
     (when (re-search-forward restclient-method-url-regexp (point-max) t)
-      (let ((method (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
-            (url (buffer-substring-no-properties (match-beginning 2) (match-end 2)))
+      (let ((method (match-string-no-properties 1))
+            (url (match-string-no-properties 2))
+            (vars (restclient-find-vars-before-point))
             (headers '()))
         (forward-line)
-        (while (re-search-forward restclient-header-regexp (point-at-eol) t)
-          (setq headers (cons (cons (buffer-substring-no-properties (match-beginning 1) (match-end 1))
-                                    (buffer-substring-no-properties (match-beginning 2) (match-end 2)))
-                              headers))
+        (while (cond
+                ((looking-at restclient-header-regexp)
+                 (setq headers (cons (restclient-replace-all-in-header vars (restclient-make-header)) headers)))
+                ((looking-at restclient-use-var-regexp)
+                 (setq headers (append headers (restclient-parse-headers (restclient-replace-all-in-string vars (match-string 1)))))))
           (forward-line))
-        (when (looking-at "^\\s-*$")
+        (when (looking-at restclient-empty-line-regexp)
           (forward-line))
         (let* ((cmax (restclient-current-max))
                (entity (buffer-substring (min (point) cmax) cmax))
-               (vars (restclient-find-vars-before-point))
                (url (restclient-replace-all-in-string vars url))
-               (headers (restclient-replace-all-in-headers vars headers))
                (entity (restclient-replace-all-in-string vars entity)))
           (apply func method url headers entity args))))))
 
@@ -400,14 +439,16 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
   (backward-char 1)
   (setq deactivate-mark nil))
 
-(defvar restclient-mode-keywords
+(defconst restclient-mode-keywords
   (list (list restclient-method-url-regexp '(1 font-lock-keyword-face) '(2 font-lock-function-name-face))
-        (list restclient-header-regexp '(1 font-lock-variable-name-face) '(2 font-lock-string-face))
-        (list restclient-evar-regexp '(1 font-lock-preprocessor-face) '(2 font-lock-function-name-face))
-        (list restclient-var-regexp '(1 font-lock-preprocessor-face) '(3 font-lock-string-face))
+        (list restclient-svar-regexp '(1 font-lock-preprocessor-face) '(2 font-lock-string-face))
+        (list restclient-evar-regexp '(1 font-lock-preprocessor-face) '(2 font-lock-function-name-face t))
+        (list restclient-mvar-regexp '(1 font-lock-preprocessor-face) '(2 font-lock-doc-face t))
+        (list restclient-use-var-regexp '(1 font-lock-preprocessor-face))
+        (list restclient-header-regexp '(1 font-lock-variable-name-face t) '(2 font-lock-string-face t))
         ))
 
-(defvar restclient-mode-syntax-table
+(defconst restclient-mode-syntax-table
   (let ((table (make-syntax-table)))
     (modify-syntax-entry ?\# "<" table)
     (modify-syntax-entry ?\n ">#" table)
