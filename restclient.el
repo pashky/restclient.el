@@ -205,8 +205,8 @@
     (run-hooks 'restclient-http-do-hook)
     (url-retrieve url 'restclient-http-handle-response
                   (append (list method url (if restclient-same-buffer-response
-                            restclient-same-buffer-response-name
-                          (format "*HTTP %s %s*" method url))) handle-args) nil restclient-inhibit-cookies)))
+                                               restclient-same-buffer-response-name
+                                             (format "*HTTP %s %s*" method url))) handle-args) nil restclient-inhibit-cookies)))
 
 (defun restclient-prettify-response (method url)
   (save-excursion
@@ -226,7 +226,7 @@
                                                      ("image/jpeg" . image-mode)
                                                      ("image/jpg" . image-mode)
                                                      ("image/gif" . image-mode)
-                        ("text/html" . html-mode))))))
+                                                     ("text/html" . html-mode))))))
                         (forward-line)) 0)))
       (setq end-of-headers (point))
       (while (and (looking-at restclient-empty-line-regexp)
@@ -308,10 +308,10 @@ The buffer contains the raw HTTP response sent by the server."
   (let* ((charset-regexp "Content-Type.*charset=\\([-A-Za-z0-9]+\\)")
          (image? (save-excursion
                    (search-forward-regexp "Content-Type.*[Ii]mage" nil t)))
-	 (encoding (if (save-excursion
-			 (search-forward-regexp charset-regexp nil t))
-		       (intern (downcase (match-string 1)))
-		     'utf-8)))
+         (encoding (if (save-excursion
+                         (search-forward-regexp charset-regexp nil t))
+                       (intern (downcase (match-string 1)))
+                     'utf-8)))
     (if image?
         ;; Dont' attempt to decode. Instead, just switch to the raw HTTP response buffer and
         ;; rename it to target-buffer-name.
@@ -402,8 +402,8 @@ The buffer contains the raw HTTP response sent by the server."
   (let ((start 0)
         (headers '()))
     (while (string-match restclient-header-regexp string start)
-        (setq headers (cons (restclient-make-header string) headers)
-              start (match-end 0)))
+      (setq headers (cons (restclient-make-header string) headers)
+            start (match-end 0)))
     headers))
 
 (defun restclient-read-file (path)
@@ -538,6 +538,9 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
 
   (set (make-local-variable 'font-lock-defaults) '(restclient-mode-keywords)))
 
-
 (provide 'restclient)
+
+(eval-after-load 'helm
+  '(require 'helm-restclient))
+
 ;;; restclient.el ends here

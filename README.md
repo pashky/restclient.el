@@ -25,6 +25,7 @@ and supports a few additional keypresses:
 - `C-c C-n`: jump to the next query
 - `C-c C-.`: mark the query under the cursor
 - `C-c C-u`: copy query under the cursor as a curl command
+- `C-c C-g`: start a [helm](https://emacs-helm.github.io/helm/) session with sources for variables and requests (if helm is available, of course)
 
 Query file example:
 
@@ -200,6 +201,7 @@ but may use more unique separator in future.
 
 # History
 
+- _06/Apr/2016_ Helm sources for variables and requests added.
 - _06/Apr/2016_ File uploads! See upstairs for syntax.
 - _06/Apr/2016_ Added customizable faces for all syntax highlighting, so it can be used in themes.
 - _05/Apr/2016_ Added ability to declare multi-line variables (e.g. set of headers repeated for each request) and substitute variable values recursively.
