@@ -45,6 +45,61 @@
   :group 'restclient
   :type 'boolean)
 
+(defgroup restclient-faces nil
+  "Faces used in Restclient Mode"
+  :group 'restclient
+  :group 'faces)
+
+(defface restclient-variable-name-face
+  '((t (:inherit font-lock-preprocessor-face)))
+  "Face for variable name."
+  :group 'restclient-faces)
+
+(defface restclient-variable-string-face
+  '((t (:inherit font-lock-string-face)))
+  "Face for variable value (string)."
+  :group 'restclient-faces)
+
+(defface restclient-variable-elisp-face
+  '((t (:inherit font-lock-function-name-face)))
+  "Face for variable value (Emacs lisp)."
+  :group 'restclient-faces)
+
+(defface restclient-variable-multiline-face
+  '((t (:inherit font-lock-doc-face)))
+  "Face for multi-line variable value marker."
+  :group 'restclient-faces)
+
+(defface restclient-variable-usage-face
+  '((t (:inherit restclient-variable-name-face)))
+  "Face for variable usage (only used when headers/body is represented as a single variable, not highlighted when variable appears in the middle of other text)."
+  :group 'restclient-faces)
+
+(defface restclient-method-face
+  '((t (:inherit font-lock-keyword-face)))
+  "Face for HTTP method."
+  :group 'restclient-faces)
+
+(defface restclient-url-face
+  '((t (:inherit font-lock-function-name-face)))
+  "Face for variable value (Emacs lisp)."
+  :group 'restclient-faces)
+
+(defface restclient-file-upload-face
+  '((t (:inherit restclient-variable-multiline-face)))
+  "Face for highlighting upload file paths."
+  :group 'restclient-faces)
+
+(defface restclient-header-name-face
+  '((t (:inherit font-lock-variable-name-face)))
+  "Face for HTTP header name."
+  :group 'restclient-faces)
+
+(defface restclient-header-value-face
+  '((t (:inherit font-lock-string-face)))
+  "Face for HTTP header value."
+  :group 'restclient-faces)
+
 (defvar restclient-within-call nil)
 
 (defvar restclient-request-time-start nil)
@@ -86,6 +141,9 @@
 
 (defconst restclient-mvar-regexp
   "^\\(:[^: ]+\\)[ \t]*:?=[ \t]*\\(<<\\)[ \t]*$")
+
+(defconst restclient-file-regexp
+  "^\\s-*<[ \t]*\\(.*\\)")
 
 (defconst restclient-content-type-regexp
   "^Content-[Tt]ype: \\(\\w+\\)/\\(?:[^\\+\r\n]*\\+\\)*\\([^;\r\n]+\\)")
@@ -348,6 +406,16 @@ The buffer contains the raw HTTP response sent by the server."
               start (match-end 0)))
     headers))
 
+(defun restclient-read-file (path)
+  (with-temp-buffer
+    (insert-file-contents path)
+    (buffer-string)))
+
+(defun restclient-parse-body (entity vars)
+  (if (string-match restclient-file-regexp entity)
+      (restclient-read-file (match-string 1 entity))
+    (restclient-replace-all-in-string vars entity)))
+  
 (defun restclient-http-parse-current-and-do (func &rest args)
   (save-excursion
     (goto-char (restclient-current-min))
@@ -366,9 +434,8 @@ The buffer contains the raw HTTP response sent by the server."
         (when (looking-at restclient-empty-line-regexp)
           (forward-line))
         (let* ((cmax (restclient-current-max))
-               (entity (buffer-substring (min (point) cmax) cmax))
-               (url (restclient-replace-all-in-string vars url))
-               (entity (restclient-replace-all-in-string vars entity)))
+               (entity (restclient-parse-body (buffer-substring (min (point) cmax) cmax) vars))
+               (url (restclient-replace-all-in-string vars url)))
           (apply func method url headers entity args))))))
 
 (defun restclient-copy-curl-command ()
@@ -440,12 +507,13 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
   (setq deactivate-mark nil))
 
 (defconst restclient-mode-keywords
-  (list (list restclient-method-url-regexp '(1 font-lock-keyword-face) '(2 font-lock-function-name-face))
-        (list restclient-svar-regexp '(1 font-lock-preprocessor-face) '(2 font-lock-string-face))
-        (list restclient-evar-regexp '(1 font-lock-preprocessor-face) '(2 font-lock-function-name-face t))
-        (list restclient-mvar-regexp '(1 font-lock-preprocessor-face) '(2 font-lock-doc-face t))
-        (list restclient-use-var-regexp '(1 font-lock-preprocessor-face))
-        (list restclient-header-regexp '(1 font-lock-variable-name-face t) '(2 font-lock-string-face t))
+  (list (list restclient-method-url-regexp '(1 'restclient-method-face) '(2 'restclient-url-face))
+        (list restclient-svar-regexp '(1 'restclient-variable-name-face) '(2 'restclient-variable-string-face))
+        (list restclient-evar-regexp '(1 'restclient-variable-name-face) '(2 'restclient-variable-elisp-face t))
+        (list restclient-mvar-regexp '(1 'restclient-variable-name-face) '(2 'restclient-variable-multiline-face t))
+        (list restclient-use-var-regexp '(1 'restclient-variable-usage-face))
+        (list restclient-file-regexp '(0 'restclient-file-upload-face))
+        (list restclient-header-regexp '(1 'restclient-header-name-face t) '(2 'restclient-header-value-face t))
         ))
 
 (defconst restclient-mode-syntax-table

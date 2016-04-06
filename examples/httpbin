@@ -146,3 +146,9 @@ POST http://httpbin.org/post?q=2
     "other": "body",
     "common": :common-body
 }
+
+# File upload
+PUT http://httpbin.org/put
+Content-type: text/plain
+
+< /etc/passwd

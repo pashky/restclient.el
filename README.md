@@ -131,6 +131,15 @@ and the body.
 
     { "name": ":the-name" }
 
+# File uploads
+
+Restclient now allows to specify file path to use as a body, like this:
+
+    POST http://httpbin.org/post
+    Content-type: text/plain
+
+    < /etc/passwd
+    
 ### Caveats:
 
 - Multiline variables can be used in headers or body. In URL too, but it doesn't make sense unless it was long elisp expression evaluating to simple value.
@@ -142,7 +151,7 @@ and the body.
 
 # Customization
 
-There are several variables available to customize `restclient` to your liking.
+There are several variables available to customize `restclient` to your liking. Also, all font lock faces are now customizable in `resclient-faces` group too.
 
 ### restclient-log-request
 
@@ -188,6 +197,14 @@ but may use more unique separator in future.
 - Due to a [bug](http://debbugs.gnu.org/cgi/bugreport.cgi?bug=17976) in
   Emacs/url.el, some GET requests to `localhost` might fail. As a workaround you
   can use `127.0.0.1` instead of `localhost` until this is fixed.
+
+# History
+
+- _06/Apr/2016_ File uploads! See upstairs for syntax.
+- _06/Apr/2016_ Added customizable faces for all syntax highlighting, so it can be used in themes.
+- _05/Apr/2016_ Added ability to declare multi-line variables (e.g. set of headers repeated for each request) and substitute variable values recursively.
+- _25/Mar/2015_ Chop last newline from request body. If you really need to send one, just add one more, otherwise url-encoded POSTs will fail.
+- _15/Jun/2013_ Added support for variables.
 
 # License
 
