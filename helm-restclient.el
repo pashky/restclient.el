@@ -1,4 +1,4 @@
-;;; restclient.el --- An interactive HTTP client for Emacs
+;;; helm-restclient.el --- helm interface for restclient.el
 ;;
 ;; Public domain.
 
