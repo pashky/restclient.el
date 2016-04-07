@@ -1,4 +1,4 @@
-;;; helm-restclient.el --- helm interface for restclient.el
+;;; restclient-helm.el --- helm interface for restclient.el
 ;;
 ;; Public domain.
 
@@ -63,7 +63,7 @@
   (interactive)
   (helm :sources '(restclient-helm-requests-source restclient-helm-variables-source)))
 
-(provide 'helm-restclient)
+(provide 'restclient-helm)
 
 (eval-after-load 'restclient
   '(progn
