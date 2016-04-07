@@ -17,6 +17,7 @@
 ;;; Code:
 ;;
 (require 'helm)
+(require 'helm-utils)
 (require 'restclient)
 
 (defun restclient-helm-find-candidates-matching (regexp process)
