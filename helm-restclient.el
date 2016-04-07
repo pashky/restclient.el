@@ -23,7 +23,10 @@
 (defun restclient-helm-find-candidates-matching (regexp process)
   (let ((result '()))
     (with-helm-current-buffer
-      (font-lock-ensure)
+      (if (fboundp 'font-lock-ensure)
+          (font-lock-ensure)
+        (with-no-warnings
+          (font-lock-fontify-buffer)))
       (save-excursion
         (goto-char (point-min))
         (while (re-search-forward regexp nil t)
