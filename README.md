@@ -208,6 +208,11 @@ but may use more unique separator in future.
 - _25/Mar/2015_ Chop last newline from request body. If you really need to send one, just add one more, otherwise url-encoded POSTs will fail.
 - _15/Jun/2013_ Added support for variables.
 
+# Related 3rd party packages
+
+- [company-restclient](https://github.com/iquiw/company-restclient): It provides auto-completion for HTTP methods and headers in restclient-mode. Completion source is given by know-your-http-well.
+- [ob-restclient](https://github.com/alf/ob-restclient.el): An extension to restclient.el for emacs that provides org-babel support.
+
 # License
 
 Public domain, do whatever you want.
