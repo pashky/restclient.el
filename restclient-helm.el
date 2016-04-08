@@ -70,4 +70,4 @@
   '(progn
      (define-key restclient-mode-map (kbd "C-c C-g") #'helm-restclient)))
 
-;;; helm-restclient.el ends here
+;;; restclient-helm.el ends here
