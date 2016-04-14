@@ -152,3 +152,7 @@ PUT http://httpbin.org/put
 Content-type: text/plain
 
 < /etc/passwd
+# Test for issue #121
+POST http://httpbin.org/post
+
+{"json": "that looks like header"}

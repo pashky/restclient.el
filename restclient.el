@@ -125,7 +125,7 @@
   "^\\(GET\\|POST\\|DELETE\\|PUT\\|HEAD\\|OPTIONS\\|PATCH\\) \\(.*\\)$")
 
 (defconst restclient-header-regexp
-  "^\\([^ :]+\\): \\(.*\\)$")
+  "^\\([^](),/:;@[\\{}= \t]+\\): \\(.*\\)$")
 
 (defconst restclient-use-var-regexp
   "^\\(:[^: \n]+\\)$")
@@ -426,7 +426,7 @@ The buffer contains the raw HTTP response sent by the server."
             (headers '()))
         (forward-line)
         (while (cond
-                ((looking-at restclient-header-regexp)
+                ((and (looking-at restclient-header-regexp) (not (looking-at restclient-empty-line-regexp)))
                  (setq headers (cons (restclient-replace-all-in-header vars (restclient-make-header)) headers)))
                 ((looking-at restclient-use-var-regexp)
                  (setq headers (append headers (restclient-parse-headers (restclient-replace-all-in-string vars (match-string 1)))))))
