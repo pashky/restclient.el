@@ -143,7 +143,7 @@
   "^\\(:[^: ]+\\)[ \t]*:?=[ \t]*\\(<<\\)[ \t]*$")
 
 (defconst restclient-file-regexp
-  "^\\s-*<[ \t]*\\(.*\\)")
+  "^<[ \t]*\\([^<>]+\\)[ \t]*$")
 
 (defconst restclient-content-type-regexp
   "^Content-[Tt]ype: \\(\\w+\\)/\\(?:[^\\+\r\n]*\\+\\)*\\([^;\r\n]+\\)")
