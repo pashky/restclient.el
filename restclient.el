@@ -355,7 +355,8 @@ The buffer contains the raw HTTP response sent by the server."
   (save-excursion
     (if (re-search-forward restclient-comment-start-regexp (point-max) t)
         (max (- (point-at-bol) 1) 1)
-      (point-max))))
+      (progn (goto-char (point-max))
+             (if (looking-at "^$") (- (point) 1) (point))))))
 
 (defun restclient-replace-all-in-string (replacements string)
   (if replacements
