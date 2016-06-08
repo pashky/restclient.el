@@ -369,7 +369,7 @@ The buffer contains the raw HTTP response sent by the server."
                                                   (lambda (key)
                                                     (setq continue t)
                                                     (cdr (assoc key replacements)))
-                                                  current nil t)))
+                                                  current t t)))
         current)
     string))
 
