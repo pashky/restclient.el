@@ -154,13 +154,12 @@
 ;; and password.
 (defadvice url-http-handle-authentication (around restclient-fix)
   (if restclient-within-call
-      (setq success t ad-return-value t)
+      (setq ad-return-value t)
     ad-do-it))
 (ad-activate 'url-http-handle-authentication)
 
 (defadvice url-cache-extract (around restclient-fix-2)
-  (if restclient-within-call
-      (setq success t)
+  (unless restclient-within-call
     ad-do-it))
 (ad-activate 'url-cache-extract)
 
