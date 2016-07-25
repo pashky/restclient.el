@@ -412,7 +412,7 @@ The buffer contains the raw HTTP response sent by the server."
     (buffer-string)))
 
 (defun restclient-parse-body (entity vars)
-  (if (string-match restclient-file-regexp entity)
+  (if (= 0 (or (string-match restclient-file-regexp entity) 1))
       (restclient-read-file (match-string 1 entity))
     (restclient-replace-all-in-string vars entity)))
   
