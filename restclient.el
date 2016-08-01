@@ -506,6 +506,11 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
   (backward-char 1)
   (setq deactivate-mark nil))
 
+(defun restclient-narrow-to-current ()
+  "Narrow to region of current request"
+  (interactive)
+  (narrow-to-region (restclient-current-min) (restclient-current-max)))
+
 (defconst restclient-mode-keywords
   (list (list restclient-method-url-regexp '(1 'restclient-method-face) '(2 'restclient-url-face))
         (list restclient-svar-regexp '(1 'restclient-variable-name-face) '(2 'restclient-variable-string-face))
@@ -532,6 +537,7 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
   (local-set-key (kbd "C-c C-p") 'restclient-jump-prev)
   (local-set-key (kbd "C-c C-.") 'restclient-mark-current)
   (local-set-key (kbd "C-c C-u") 'restclient-copy-curl-command)
+  (local-set-key (kbd "C-c n n") 'restclient-narrow-to-current)
   (set (make-local-variable 'comment-start) "# ")
   (set (make-local-variable 'comment-start-skip) "# *")
   (set (make-local-variable 'comment-column) 48)
