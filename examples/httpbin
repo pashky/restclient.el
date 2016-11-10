@@ -36,6 +36,9 @@ GET http://httpbin.org/response-headers?Content-Type=application/vnd.whatever%2B
 # Content type is loosely matched, could be application/vnd.whatever+json
 GET http://httpbin.org/response-headers?Content-Type=application/something%2Bjson
 
+# Process pdf as binary: response is not modified and coding system set to no-conversion
+GET http://httpbin.org/response-headers?Content-Type=application/pdf
+
 # Returns PUT data.
 PUT http://httpbin.org/put
 Content-Type: application/json
@@ -150,6 +153,9 @@ POST http://httpbin.org/post?q=2
 # File upload
 PUT http://httpbin.org/put
 Content-type: text/plain
+
+# Test png image
+GET http://httpbin.org/image/png
 
 < /etc/passwd
 # Test for issue #121
