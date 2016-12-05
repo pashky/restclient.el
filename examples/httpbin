@@ -113,3 +113,46 @@ pwd=1234
 POST http://httpbin.org/post
 
 :foo
+
+#
+# Variables
+#
+:auth-token = abcd1234
+:number := (+ 1 2 3 4)
+:text := (concat "This is " ":num" "ber")
+#
+# Multiline variable referencing another variable
+#
+:common-headers = <<
+Authentication: :auth-token
+User-Agent: MyApp/1.0
+Content-type: application/json
+#
+# ...and another one
+:common-body = <<
+{ "number": :number, "text": ":text" }
+#
+# Now, use them both in request
+#
+POST http://httpbin.org/post?q=1
+:common-headers
+
+:common-body
+# ...and another example
+POST http://httpbin.org/post?q=2
+:common-headers
+
+{
+    "other": "body",
+    "common": :common-body
+}
+
+# File upload
+PUT http://httpbin.org/put
+Content-type: text/plain
+
+< /etc/passwd
+# Test for issue #121
+POST http://httpbin.org/post
+
+{"json": "that looks like header"}
