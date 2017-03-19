@@ -111,6 +111,9 @@
 (defvar restclient-http-do-hook nil
   "Hook to run before making request.")
 
+(defvar restclient-overlay nil
+  "Overlay used to highlight the current request.")
+
 (defcustom restclient-vars-max-passes 10
   "Maximum number of recursive variable references. This is to prevent hanging if two variables reference each other directly or indirectly."
   :group 'restclient
@@ -348,7 +351,18 @@ The buffer contains the raw HTTP response sent by the server."
             (point-at-bol) (point-max))
       (if (re-search-backward restclient-comment-start-regexp (point-min) t)
           (point-at-bol 2)
-        (point-min)))))
+        (if (eq restclient-common-prefix "^")
+            (point-min)
+          (progn
+            (goto-char (point-min))
+            (if (re-search-forward (concat restclient-common-prefix "#.*?\n") (point-max) t)
+                (if (re-search-forward (concat restclient-common-prefix "[^#]*?$") (point-max) t)
+                    (point-at-bol)
+                  (error "Could not find current request"))
+                ;;(progn
+                ;;  (while (looking-at (concat restclient-common-prefix "#")) (forward-line 1))
+                ;;  (point-at-bol))
+              (error "Could not find current request"))))))))
 
 (defun restclient-current-max ()
   (save-excursion
@@ -483,28 +497,43 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
 (defun restclient-jump-prev ()
   "Jump to previous request in buffer."
   (interactive)
-  (let* ((current-min (restclient-current-min))
-         (end-of-entity
-          (save-excursion
-            (progn (goto-char (restclient-current-min))
-                   (while (and (or (looking-at "^\s*\\(#.*\\)?$")
-                                   (eq (point) current-min))
-                               (not (eq (point) (point-min))))
+  (let* ((curr-min (restclient-current-min))
+         (prev-min (save-excursion
+                     (goto-char curr-min)
                      (forward-line -1)
-                     (beginning-of-line))
-                   (point)))))
-    (unless (eq (point-min) end-of-entity)
-      (goto-char end-of-entity)
-      (goto-char (restclient-current-min)))))
+                     (while (and (looking-at (concat restclient-common-prefix "#"))
+                                 (not (bobp)))
+                       (forward-line -1))
+                     (restclient-current-min))))
+    (if (eq curr-min prev-min)
+        (message "No previous request found.")
+      (progn
+        (goto-char prev-min)
+        (restclient-highlight-selection prev-min (restclient-current-max))))))
 
 (defun restclient-mark-current ()
   "Mark current request."
   (interactive)
   (goto-char (restclient-current-min))
-  (set-mark-command nil)
-  (goto-char (restclient-current-max))
-  (backward-char 1)
-  (setq deactivate-mark nil))
+  (restclient-highlight-selection
+   (restclient-current-min)
+   (restclient-current-max)))
+
+(defun restclient-highlight-selection (begin end &optional face)
+  "Highlight selection between BEGIN and END.
+Optional FACE can be specified, otherwise `highlight' is
+used by default."
+  (let ((hiface (or face 'highlight)))
+    (setq restclient-overlay (make-overlay begin end))
+    (overlay-put restclient-overlay 'face hiface)
+    (add-hook 'pre-command-hook 'restclient-remove-overlay)))
+
+(defun restclient-remove-overlay ()
+  "Remove overlay set by `restclient-highlight-selection'."
+  (delete-overlay restclient-overlay)
+  (setq restclient-overlay nil)
+  (remove-hook 'pre-command-hook 'restclient-remove-overlay))
+
 
 (defun restclient-narrow-to-current ()
   "Narrow to region of current request"
