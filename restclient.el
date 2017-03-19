@@ -116,6 +116,22 @@
   :group 'restclient
   :type 'integer)
 
+;; no-conversion is alias of binary
+(defcustom restclient-default-encoding '(("application/json" . utf-8)
+                                         ("application/pdf" . no-conversion)
+                                         ("application/xml" . utf-8)
+                                         ("application/zip" . no-conversion)
+                                         ("image/gif" . no-conversion)
+                                         ("image/jpeg" . no-conversion)
+                                         ("image/jpg" . no-conversion)
+                                         ("image/png" . no-conversion)
+                                         ("multipart/related" . no-conversion)
+                                         ("text/html" . utf-8)
+                                         ("text/xml" . utf-8))
+  "Alist of default encodings for common media types. When reading the HTTP response, the encoding is searched in the header. When it is not found, the encoding is searched in this list. Eventually, the default is UTF-8."
+  :group 'restclient
+  :type 'alist)
+
 (defconst restclient-comment-separator "#")
 (defconst restclient-comment-start-regexp (concat "^" restclient-comment-separator))
 (defconst restclient-comment-not-regexp (concat "^[^" restclient-comment-separator "]"))
@@ -207,39 +223,50 @@
                                                restclient-same-buffer-response-name
                                              (format "*HTTP %s %s*" method url))) handle-args) nil restclient-inhibit-cookies)))
 
-(defun restclient-prettify-response (method url)
+(defun restclient-guess-encoding (content-type)
+  "Read the charset from the content type. If no charset is specified, search one from `restclient-default-encoding' or default to UTF-8."
+  (let ((encoding (cdr (assoc-string 'encoding content-type))))
+    (when (null encoding)
+      (let ((mime (concat (cdr (assoc-string 'mime-type content-type)) "/" (cdr (assoc-string 'mime-subtype content-type)))))
+        (setq encoding (or (cdr (assoc-string mime restclient-default-encoding))
+                           'utf-8))))
+    encoding))
+
+(defun restclient-guess-mode (content-type)
+  "Guess a mode for the content-type or by peeking at the content at point."
+  (let* ((mime (concat (cdr (assoc-string 'mime-type content-type)) "/" (cdr (assoc-string 'mime-subtype content-type))))
+         (mode-for-mime (cdr (assoc-string mime
+                                           '(("application/json" . js-mode)
+                                             ("application/xml" . xml-mode)
+                                             ("image/gif" . image-mode)
+                                             ("image/jpeg" . image-mode)
+                                             ("image/jpg" . image-mode)
+                                             ("image/png" . image-mode)
+                                             ("text/html" . html-mode)
+                                             ("text/xml" . xml-mode))))))
+    (or mode-for-mime
+        (or (assoc-default nil
+                           ;; magic mode matches
+                           '(("<\\?xml " . xml-mode)
+                             ("{\\s-*\"" . js-mode))
+                           (lambda (re _dummy)
+                             (looking-at re))) 'js-mode))))
+
+(defun restclient-prettify-response (method url content-type)
   (save-excursion
     (let ((start (point)) (guessed-mode) (end-of-headers))
+      ;; skip the header
       (while (and (not (looking-at restclient-empty-line-regexp))
-                  (eq (progn
-                        (when (looking-at restclient-content-type-regexp)
-                          (setq guessed-mode
-                                (cdr (assoc-string (concat
-                                                    (match-string-no-properties 1)
-                                                    "/"
-                                                    (match-string-no-properties 2))
-                                                   '(("text/xml" . xml-mode)
-                                                     ("application/xml" . xml-mode)
-                                                     ("application/json" . js-mode)
-                                                     ("image/png" . image-mode)
-                                                     ("image/jpeg" . image-mode)
-                                                     ("image/jpg" . image-mode)
-                                                     ("image/gif" . image-mode)
-                                                     ("text/html" . html-mode))))))
-                        (forward-line)) 0)))
+                  (eq (forward-line) 0)))
       (setq end-of-headers (point))
       (while (and (looking-at restclient-empty-line-regexp)
                   (eq (forward-line) 0)))
-      (unless guessed-mode
-        (setq guessed-mode
-              (or (assoc-default nil
-                                 ;; magic mode matches
-                                 '(("<\\?xml " . xml-mode)
-                                   ("{\\s-*\"" . js-mode))
-                                 (lambda (re _dummy)
-                                   (looking-at re))) 'js-mode)))
-      (let ((headers (buffer-substring-no-properties start end-of-headers)))
-        (when guessed-mode
+
+      (setq guessed-mode (restclient-guess-mode content-type))
+
+      (let ((headers (buffer-substring-no-properties start end-of-headers))
+            (binary (equal 'no-conversion (restclient-guess-encoding content-type))))
+        (when (or guessed-mode binary)
           (delete-region start (point))
           (unless (eq guessed-mode 'image-mode)
             (apply guessed-mode '())
@@ -266,14 +293,16 @@
               (ignore-errors (json-pretty-print-buffer)))
             (restclient-prettify-json-unicode)))
 
-          (goto-char (point-max))
-          (or (eq (point) (point-min)) (insert "\n"))
-          (let ((hstart (point)))
-            (insert method " " url "\n" headers)
-            (insert (format "Request duration: %fs\n" (float-time (time-subtract restclient-request-time-end restclient-request-time-start))))
-            (unless (eq guessed-mode 'image-mode)
-              (comment-region hstart (point))
-              (indent-region hstart (point)))))))))
+          (when (not binary)
+            (goto-char (point-max))
+            (or (eq (point) (point-min)) (insert "\n"))
+            (let ((hstart (point)))
+              (insert method " " url "\n" headers)
+              (insert (format "Request duration: %fs\n" (float-time (time-subtract restclient-request-time-end restclient-request-time-start))))
+              (unless (eq guessed-mode 'image-mode)
+                (comment-region hstart (point))
+                  (indent-region hstart (point)))
+              )))))))
 
 (defun restclient-prettify-json-unicode ()
   (save-excursion
@@ -290,55 +319,66 @@ The buffer contains the raw HTTP response sent by the server."
       (signal (car (plist-get status :error)) (cdr (plist-get status :error)))
     (restclient-restore-header-variables)
     (when (buffer-live-p (current-buffer))
-      (with-current-buffer (restclient-decode-response
-                            (current-buffer)
-                            bufname
-                            restclient-same-buffer-response)
-        (unless raw
-          (restclient-prettify-response method url))
-        (buffer-enable-undo)
-        (run-hooks 'restclient-response-loaded-hook)
-        (if stay-in-window
-            (display-buffer (current-buffer) t)
-          (switch-to-buffer-other-window (current-buffer)))))))
 
-(defun restclient-decode-response (raw-http-response-buffer target-buffer-name same-name)
-  "Decode the HTTP response using the charset (encoding) specified in the Content-Type header. If no charset is specified, default to UTF-8."
-  (let* ((charset-regexp "Content-Type.*charset=\\([-A-Za-z0-9]+\\)")
-         (image? (save-excursion
-                   (search-forward-regexp "Content-Type.*[Ii]mage" nil t)))
-         (encoding (if (save-excursion
-                         (search-forward-regexp charset-regexp nil t))
-                       (intern (downcase (match-string 1)))
-                     'utf-8)))
-    (if image?
-        ;; Dont' attempt to decode. Instead, just switch to the raw HTTP response buffer and
-        ;; rename it to target-buffer-name.
-        (with-current-buffer raw-http-response-buffer
-          ;; We have to kill the target buffer if it exists, or `rename-buffer'
-          ;; will raise an error.
-          (when (get-buffer target-buffer-name)
-            (kill-buffer target-buffer-name))
-          (rename-buffer target-buffer-name)
-          raw-http-response-buffer)
-      ;; Else, switch to the new, empty buffer that will contain the decoded HTTP
-      ;; response. Set its encoding, copy the content from the unencoded
-      ;; HTTP response buffer and decode.
-      (let ((decoded-http-response-buffer
-             (get-buffer-create
-              (if same-name target-buffer-name (generate-new-buffer-name target-buffer-name)))))
-        (with-current-buffer decoded-http-response-buffer
-          (setq buffer-file-coding-system encoding)
-          (save-excursion
-            (erase-buffer)
-            (insert-buffer-substring raw-http-response-buffer))
-          (kill-buffer raw-http-response-buffer)
-          (condition-case nil
-              (decode-coding-region (point-min) (point-max) encoding)
-            (error
-             (message (concat "Error when trying to decode http response with encoding: "
-                              (symbol-name encoding)))))
-          decoded-http-response-buffer)))))
+      (let ((content-type (restclient-parse-content-type)))
+        (with-current-buffer (restclient-decode-response
+                             (restclient-guess-encoding content-type)
+                             (current-buffer)
+                             bufname
+                             restclient-same-buffer-response)
+          (unless raw
+            (restclient-prettify-response method url content-type))
+
+          (buffer-enable-undo)
+          (run-hooks 'restclient-response-loaded-hook)
+          (if stay-in-window
+              (display-buffer (current-buffer) t)
+            (switch-to-buffer-other-window (current-buffer))))))))
+
+(defun restclient-parse-content-type ()
+  "Read the content-type from the answer"
+  (let* ((charset-regexp ".*charset=\\([-A-Za-z0-9]+\\)")
+         (mime-type)(mime-subtype)(charset))
+    (save-excursion
+      (when (search-forward-regexp restclient-content-type-regexp nil t)
+        (setq mime-type (match-string-no-properties 1))
+        (setq mime-subtype (match-string-no-properties 2))
+        (when (looking-at charset-regexp)
+          (setq charset (intern (downcase (match-string-no-properties 1)))))))
+    (list (cons 'mime-type mime-type) (cons 'mime-subtype mime-subtype) (cons 'encoding charset))))
+
+(defun restclient-decode-response (encoding raw-http-response-buffer target-buffer-name same-name)
+  "Decode the HTTP response using the specified charset (encoding)."
+  (if (equal encoding 'no-conversion)
+      ;; Possible simplification: delete the if part and always execute the else block
+      ;; Dont' attempt to decode. Instead, just switch to the raw HTTP response buffer and
+      ;; rename it to target-buffer-name.
+      (with-current-buffer raw-http-response-buffer
+        (setq buffer-file-coding-system 'no-conversion)
+        ;; We have to kill the target buffer if it exists, or `rename-buffer'
+        ;; will raise an error.
+        (when (get-buffer target-buffer-name)
+          (kill-buffer target-buffer-name))
+        (rename-buffer target-buffer-name)
+        raw-http-response-buffer)
+    ;; Else, switch to the new, empty buffer that will contain the decoded HTTP
+    ;; response. Set its encoding, copy the content from the unencoded
+    ;; HTTP response buffer and decode.
+    (let ((decoded-http-response-buffer
+           (get-buffer-create
+            (if same-name target-buffer-name (generate-new-buffer-name target-buffer-name)))))
+      (with-current-buffer decoded-http-response-buffer
+        (setq buffer-file-coding-system encoding)
+        (save-excursion
+          (erase-buffer)
+          (insert-buffer-substring raw-http-response-buffer))
+        (kill-buffer raw-http-response-buffer)
+        (condition-case nil
+            (decode-coding-region (point-min) (point-max) encoding)
+          (error
+           (message (concat "Error when trying to decode http response with encoding: "
+                            (symbol-name encoding)))))
+        decoded-http-response-buffer))))
 
 (defun restclient-current-min ()
   (save-excursion
@@ -415,7 +455,7 @@ The buffer contains the raw HTTP response sent by the server."
   (if (= 0 (or (string-match restclient-file-regexp entity) 1))
       (restclient-read-file (match-string 1 entity))
     (restclient-replace-all-in-string vars entity)))
-  
+
 (defun restclient-http-parse-current-and-do (func &rest args)
   (save-excursion
     (goto-char (restclient-current-min))
