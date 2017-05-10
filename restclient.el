@@ -20,6 +20,7 @@
 ;;
 (require 'url)
 (require 'json)
+(require 'cl-macs)
 
 (defgroup restclient nil
   "An interactive HTTP client for Emacs."
@@ -408,8 +409,13 @@ The buffer contains the raw HTTP response sent by the server."
 
 (defun restclient-read-file (path)
   (with-temp-buffer
-    (insert-file-contents path)
-    (buffer-string)))
+    (cl-flet ((chomp
+               (str)
+               (replace-regexp-in-string
+                (rx (* (any " \t\n")) eos)
+                "" str)))
+      (insert-file-contents (chomp path))
+      (buffer-string))))
 
 (defun restclient-parse-body (entity vars)
   (if (= 0 (or (string-match restclient-file-regexp entity) 1))
