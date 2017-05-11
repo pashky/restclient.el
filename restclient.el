@@ -106,10 +106,13 @@
 (defvar restclient-request-time-end nil)
 
 (defvar restclient-response-loaded-hook nil
-  "Hook run after response buffer created and data loaded.")
+  "Hook run after response buffer is formatted.")
 
 (defvar restclient-http-do-hook nil
   "Hook to run before making request.")
+
+(defvar restclient-response-received-hook nil
+  "Hook run after data is loaded into response buffer.")
 
 (defcustom restclient-vars-max-passes 10
   "Maximum number of recursive variable references. This is to prevent hanging if two variables reference each other directly or indirectly."
@@ -294,6 +297,7 @@ The buffer contains the raw HTTP response sent by the server."
                             (current-buffer)
                             bufname
                             restclient-same-buffer-response)
+        (run-hooks 'restclient-response-received-hook)
         (unless raw
           (restclient-prettify-response method url))
         (buffer-enable-undo)
@@ -415,7 +419,7 @@ The buffer contains the raw HTTP response sent by the server."
   (if (= 0 (or (string-match restclient-file-regexp entity) 1))
       (restclient-read-file (match-string 1 entity))
     (restclient-replace-all-in-string vars entity)))
-  
+
 (defun restclient-http-parse-current-and-do (func &rest args)
   (save-excursion
     (goto-char (restclient-current-min))
