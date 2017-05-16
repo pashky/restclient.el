@@ -1,4 +1,4 @@
-# -*- restclient -*-
+# -*- mode: restclient; url-max-redirections: 0 -*-
 # Emacs restclient examples for httpbin.org
 # http://httpbin.org/: HTTP Request & Response Service
 
@@ -109,7 +109,7 @@ POST http://httpbin.org/post
 
 pwd=1234
 #
-:foo = foo\bar
+: = foo\bar
 POST http://httpbin.org/post
 
 :foo
@@ -156,3 +156,13 @@ Content-type: text/plain
 POST http://httpbin.org/post
 
 {"json": "that looks like header"}
+#
+POST http://httpbin.org/post
+Content-Type: text/xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<AAA xmlns="ns"
+     another-attr="x">
+</AAA>
+#
+GET http://httpbin.org/redirect-to?url=http%3A%2F%2Fexample.com%2F
