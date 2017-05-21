@@ -531,12 +531,54 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
     (modify-syntax-entry ?\n ">#" table)
     table))
 
+(defun restclient-format-curl-headers (headers)
+  "formats zero or more headers for use in a curl command"
+  (mapconcat (lambda (header)
+                 (format "-H '%s: %s'" (car header) (cdr header)))
+             headers " "))
+
+(defun restclient-format-curl-entity (entity)
+  "formats the request's entity for use in a curl command"
+  (if (> (string-width entity) 0)
+      (format "-d '%s'" entity)
+    ""))
+
+;;;###autoload
+(defun restclient-copy-curl-command ()
+  "formats the request as a curl command and copies the command to the clipboard"
+  (interactive)
+  (save-excursion
+    (goto-char (restclient-current-min))
+    (when (re-search-forward restclient-method-url-regexp (point-max) t)
+      (let ((method (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
+            (url (buffer-substring-no-properties (match-beginning 2) (match-end 2)))
+            (headers '()))
+        (forward-line)
+        (while (re-search-forward restclient-header-regexp (point-at-eol) t)
+          (setq headers (cons (cons (buffer-substring-no-properties (match-beginning 1) (match-end 1))
+                                    (buffer-substring-no-properties (match-beginning 2) (match-end 2)))
+                              headers))
+          (forward-line))
+        (when (looking-at "^\\s-*$")
+          (forward-line))
+        (let* ((entity (buffer-substring (point) (restclient-current-max)))
+               (vars (restclient-find-vars-before-point))
+               (url (restclient-replace-all-in-string vars url))
+               (headers (restclient-replace-all-in-headers vars headers))
+               (entity (restclient-replace-all-in-string vars entity)))
+          (kill-new (format "curl -i %s -X%s '%s' %s"
+                   (restclient-format-curl-headers headers)
+                   method url
+                   (restclient-format-curl-entity entity)))
+          (message "curl command copied to clipboard."))))))
+
 ;;;###autoload
 (define-derived-mode restclient-mode fundamental-mode "REST Client"
   "Turn on restclient mode."
   (local-set-key (kbd "C-c C-c") 'restclient-http-send-current)
   (local-set-key (kbd "C-c C-r") 'restclient-http-send-current-raw)
   (local-set-key (kbd "C-c C-v") 'restclient-http-send-current-stay-in-window)
+  (local-set-key (kbd "C-c C-u") 'restclient-copy-curl-command)
   (local-set-key (kbd "C-c C-n") 'restclient-jump-next)
   (local-set-key (kbd "C-c C-p") 'restclient-jump-prev)
   (local-set-key (kbd "C-c C-.") 'restclient-mark-current)
