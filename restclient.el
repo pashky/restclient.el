@@ -455,6 +455,15 @@ The buffer contains the raw HTTP response sent by the server."
       (message "curl command copied to clipboard."))))
 
 ;;;###autoload
+(defun restclient-new-buffer ()
+  (interactive)
+  (let ((buffer (generate-new-buffer "*rest-client*")))
+    (with-current-buffer buffer
+      (insert "# -*- restclient -*- \n\n")
+      (restclient-mode)
+      (pop-to-buffer buffer))))
+
+;;;###autoload
 (defun restclient-http-send-current (&optional raw stay-in-window)
   "Sends current request.
 Optional argument RAW don't reformat response if t.
