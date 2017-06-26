@@ -222,6 +222,7 @@
                                                     "/"
                                                     (match-string-no-properties 2))
                                                    '(("text/xml" . xml-mode)
+                                                     ("text/plain" . text-mode)
                                                      ("application/xml" . xml-mode)
                                                      ("application/json" . js-mode)
                                                      ("image/png" . image-mode)
@@ -274,9 +275,8 @@
           (let ((hstart (point)))
             (insert method " " url "\n" headers)
             (insert (format "Request duration: %fs\n" (float-time (time-subtract restclient-request-time-end restclient-request-time-start))))
-            (unless (eq guessed-mode 'image-mode)
-              (comment-region hstart (point))
-              (indent-region hstart (point)))))))))
+            (unless (member guessed-mode '(image-mode text-mode))
+              (comment-region hstart (point)))))))))
 
 (defun restclient-prettify-json-unicode ()
   (save-excursion
