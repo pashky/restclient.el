@@ -166,3 +166,8 @@ Content-Type: text/xml
 </AAA>
 #
 GET http://httpbin.org/redirect-to?url=http%3A%2F%2Fexample.com%2F
+#
+:cookie=B=db9s6bpclha4g&b=3&s=eq
+
+POST http://httpbin.org/post
+Cookie: :cookie

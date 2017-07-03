@@ -134,10 +134,10 @@
   "^\\(:[^: \n]+\\)$")
 
 (defconst restclient-var-regexp
-  (concat "^\\(:[^: ]+\\)[ \t]*\\(:?\\)=[ \t]*\\(<<[ \t]*\n\\(\\(.*\n\\)*?\\)" restclient-comment-separator "\\|\\([^<].*\\)$\\)"))
+  (concat "^\\(:[^:= ]+\\)[ \t]*\\(:?\\)=[ \t]*\\(<<[ \t]*\n\\(\\(.*\n\\)*?\\)" restclient-comment-separator "\\|\\([^<].*\\)$\\)"))
 
 (defconst restclient-svar-regexp
-  "^\\(:[^: ]+\\)[ \t]*=[ \t]*\\(.+?\\)$")
+  "^\\(:[^:= ]+\\)[ \t]*=[ \t]*\\(.+?\\)$")
 
 (defconst restclient-evar-regexp
   "^\\(:[^: ]+\\)[ \t]*:=[ \t]*\\(.+?\\)$")
