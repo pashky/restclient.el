@@ -198,7 +198,7 @@
                                      ("accept" . url-mime-accept-string)))))
 
         (if mapped
-            (set (cdr mapped) (cdr header))
+            (set (cdr mapped) (encode-coding-string (cdr header) 'us-ascii))
           (let* ((hkey (encode-coding-string (car header) 'us-ascii))
                  (hvalue (encode-coding-string (cdr header) 'us-ascii)))
             (setq url-request-extra-headers (cons (cons hkey hvalue) url-request-extra-headers))))))
