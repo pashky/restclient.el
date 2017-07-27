@@ -309,9 +309,9 @@ The buffer contains the raw HTTP response sent by the server."
 
 (defun restclient-decode-response (raw-http-response-buffer target-buffer-name same-name)
   "Decode the HTTP response using the charset (encoding) specified in the Content-Type header. If no charset is specified, default to UTF-8."
-  (let* ((charset-regexp "Content-Type.*charset=\\([-A-Za-z0-9]+\\)")
+  (let* ((charset-regexp "^Content-Type.*charset=\\([-A-Za-z0-9]+\\)")
          (image? (save-excursion
-                   (search-forward-regexp "Content-Type.*[Ii]mage" nil t)))
+                   (search-forward-regexp "^Content-Type.*[Ii]mage" nil t)))
          (encoding (if (save-excursion
                          (search-forward-regexp charset-regexp nil t))
                        (intern (downcase (match-string 1)))
