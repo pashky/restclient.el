@@ -534,16 +534,16 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
     (when at-header
       (save-excursion
         (end-of-line)
-        ;; If the overlays at this point have 'invisible set, try to make
-        ;; the region visible. Else hide the region
-        ;; This part of code is from org-hide-block-toggle method of Org mode
+        ;; If the overlays at this point have 'invisible set, toggling
+        ;; must make the region visible. Else it must hide the region
+        
+        ;; This part of code is from org-hide-block-toggle method of
+        ;; Org mode
         (let ((overlays (overlays-at (point))))
           (if (memq t (mapcar
                        (lambda (o)
                          (eq (overlay-get o 'invisible) 'outline))
                        overlays))
-              ;; This means that currently the block is invisible and
-              ;; we've to make it visible
               (outline-flag-region (point) (restclient-current-max) nil)
             (outline-flag-region (point) (restclient-current-max) t)))))))
 
