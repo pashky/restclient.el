@@ -525,6 +525,28 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
   (interactive)
   (narrow-to-region (restclient-current-min) (restclient-current-max)))
 
+(defun restclient-toggle-body-visibility ()
+  (interactive)
+  ;; If we are not on the HTTP call line, don't do anything
+  (let ((at-header (save-excursion
+                     (beginning-of-line)
+                     (looking-at restclient-method-url-regexp))))
+    (when at-header
+      (save-excursion
+        (end-of-line)
+        ;; If the overlays at this point have 'invisible set, try to make
+        ;; the region visible. Else hide the region
+        ;; This part of code is from org-hide-block-toggle method of Org mode
+        (let ((overlays (overlays-at (point))))
+          (if (memq t (mapcar
+                       (lambda (o)
+                         (eq (overlay-get o 'invisible) 'outline))
+                       overlays))
+              ;; This means that currently the block is invisible and
+              ;; we've to make it visible
+              (outline-flag-region (point) (restclient-current-max) nil)
+            (outline-flag-region (point) (restclient-current-max) t)))))))
+
 (defconst restclient-mode-keywords
   (list (list restclient-method-url-regexp '(1 'restclient-method-face) '(2 'restclient-url-face))
         (list restclient-svar-regexp '(1 'restclient-variable-name-face) '(2 'restclient-variable-string-face))
@@ -552,11 +574,14 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
   (local-set-key (kbd "C-c C-.") 'restclient-mark-current)
   (local-set-key (kbd "C-c C-u") 'restclient-copy-curl-command)
   (local-set-key (kbd "C-c n n") 'restclient-narrow-to-current)
+  (local-set-key (kbd "TAB") 'restclient-toggle-body-visibility)
   (set (make-local-variable 'comment-start) "# ")
   (set (make-local-variable 'comment-start-skip) "# *")
   (set (make-local-variable 'comment-column) 48)
 
-  (set (make-local-variable 'font-lock-defaults) '(restclient-mode-keywords)))
+  (set (make-local-variable 'font-lock-defaults) '(restclient-mode-keywords))
+  ;; We use outline's methods to toggle the visibility of the body
+  (add-to-invisibility-spec '(outline . t)))
 
 (provide 'restclient)
 
