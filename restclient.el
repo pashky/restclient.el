@@ -580,7 +580,10 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
   (set (make-local-variable 'comment-column) 48)
 
   (set (make-local-variable 'font-lock-defaults) '(restclient-mode-keywords))
-  ;; We use outline's methods to toggle the visibility of the body
+  ;; We use outline-mode's method outline-flag-region to hide/show the
+  ;; body. As a part of it, it sets 'invisibility text property to
+  ;; 'outline. To get ellipsis, we need 'outline to be in
+  ;; buffer-invisibility-spec
   (add-to-invisibility-spec '(outline . t)))
 
 (provide 'restclient)
