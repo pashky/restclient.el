@@ -18,6 +18,8 @@
 
 ;;; Code:
 ;;
+(require 'restclient-scratch)
+
 (require 'url)
 (require 'json)
 
