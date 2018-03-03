@@ -45,6 +45,19 @@
   :group 'restclient
   :type 'boolean)
 
+(defcustom restclient-content-type-modes '(("text/xml" . xml-mode)
+                                           ("text/plain" . text-mode)
+                                           ("application/xml" . xml-mode)
+                                           ("application/json" . js-mode)
+                                           ("image/png" . image-mode)
+                                           ("image/jpeg" . image-mode)
+                                           ("image/jpg" . image-mode)
+                                           ("image/gif" . image-mode)
+                                           ("text/html" . html-mode))
+  "An association list mapping content types to buffer modes"
+  :group 'restclient
+  :type '(alist :key-type string :value-type symbol))
+
 (defgroup restclient-faces nil
   "Faces used in Restclient Mode"
   :group 'restclient
@@ -222,15 +235,7 @@
                                                     (match-string-no-properties 1)
                                                     "/"
                                                     (match-string-no-properties 2))
-                                                   '(("text/xml" . xml-mode)
-                                                     ("text/plain" . text-mode)
-                                                     ("application/xml" . xml-mode)
-                                                     ("application/json" . js-mode)
-                                                     ("image/png" . image-mode)
-                                                     ("image/jpeg" . image-mode)
-                                                     ("image/jpg" . image-mode)
-                                                     ("image/gif" . image-mode)
-                                                     ("text/html" . html-mode))))))
+                                                   restclient-content-type-modes))))
                         (forward-line)) 0)))
       (setq end-of-headers (point))
       (while (and (looking-at restclient-empty-line-regexp)
