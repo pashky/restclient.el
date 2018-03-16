@@ -551,7 +551,12 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
                          (eq (overlay-get o 'invisible) 'outline))
                        overlays))
               (outline-flag-region (point) (restclient-current-max) nil)
-            (outline-flag-region (point) (restclient-current-max) t)))))))
+            (outline-flag-region (point) (restclient-current-max) t)))) t)))
+
+(defun restclient-toggle-body-visibility-or-indent ()
+  (interactive)
+  (unless (restclient-toggle-body-visibility)
+    (indent-for-tab-command)))
 
 (defconst restclient-mode-keywords
   (list (list restclient-method-url-regexp '(1 'restclient-method-face) '(2 'restclient-url-face))
@@ -579,10 +584,16 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
     (define-key map (kbd "C-c C-.") 'restclient-mark-current)
     (define-key map (kbd "C-c C-u") 'restclient-copy-curl-command)
     (define-key map (kbd "C-c n n") 'restclient-narrow-to-current)
-    (define-key map (kbd "C-c C-a") 'outline-show-all)
-    (define-key map (kbd "TAB") 'restclient-toggle-body-visibility)
     map)
   "Keymap for restclient-mode.")
+
+(define-minor-mode restclient-outline-mode
+  "Minor mode to allow show/hide of request bodies by TAB."
+      :init-value nil
+      :lighter nil
+      :keymap '(("\t" . restclient-toggle-body-visibility-or-indent)
+                ("\C-c\C-a" . restclient-toggle-body-visibility-or-indent))
+      :group 'restclient)
 
 ;;;###autoload
 (define-derived-mode restclient-mode fundamental-mode "REST Client"
@@ -597,6 +608,8 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
   ;; 'outline. To get ellipsis, we need 'outline to be in
   ;; buffer-invisibility-spec
   (add-to-invisibility-spec '(outline . t)))
+
+(add-hook 'restclient-mode-hook 'restclient-outline-mode)
 
 (provide 'restclient)
 

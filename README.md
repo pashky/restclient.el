@@ -27,6 +27,10 @@ and supports a few additional keypresses:
 - `C-c C-u`: copy query under the cursor as a curl command
 - `C-c C-g`: start a [helm](https://emacs-helm.github.io/helm/) session with sources for variables and requests (if helm is available, of course)
 - `C-c n n`: narrow to region of current request (including headers)
+- `TAB`: hide/show current request body, only if 
+- `C-c C-a`: show all collapsed regions
+
+The last two functions are implemented as `restclient-outline-mode` minor mode, which is activated by default via hook for major mode. Remove this hook using `(remove-hook 'restclient-mode-hook 'restclient-outline-mode)` if you don't wish to have this behaviour, or it clashes with any other binding for `TAB` like autocomplete. 
 
 Query file example:
 
