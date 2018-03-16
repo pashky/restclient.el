@@ -45,6 +45,19 @@
   :group 'restclient
   :type 'boolean)
 
+(defcustom restclient-content-type-modes '(("text/xml" . xml-mode)
+                                           ("text/plain" . text-mode)
+                                           ("application/xml" . xml-mode)
+                                           ("application/json" . js-mode)
+                                           ("image/png" . image-mode)
+                                           ("image/jpeg" . image-mode)
+                                           ("image/jpg" . image-mode)
+                                           ("image/gif" . image-mode)
+                                           ("text/html" . html-mode))
+  "An association list mapping content types to buffer modes"
+  :group 'restclient
+  :type '(alist :key-type string :value-type symbol))
+
 (defgroup restclient-faces nil
   "Faces used in Restclient Mode"
   :group 'restclient
@@ -222,15 +235,7 @@
                                                     (match-string-no-properties 1)
                                                     "/"
                                                     (match-string-no-properties 2))
-                                                   '(("text/xml" . xml-mode)
-                                                     ("text/plain" . text-mode)
-                                                     ("application/xml" . xml-mode)
-                                                     ("application/json" . js-mode)
-                                                     ("image/png" . image-mode)
-                                                     ("image/jpeg" . image-mode)
-                                                     ("image/jpg" . image-mode)
-                                                     ("image/gif" . image-mode)
-                                                     ("text/html" . html-mode))))))
+                                                   restclient-content-type-modes))))
                         (forward-line)) 0)))
       (setq end-of-headers (point))
       (while (and (looking-at restclient-empty-line-regexp)
@@ -563,18 +568,23 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
     (modify-syntax-entry ?\n ">#" table)
     table))
 
+(defvar restclient-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c C-c") 'restclient-http-send-current)
+    (define-key map (kbd "C-c C-r") 'restclient-http-send-current-raw)
+    (define-key map (kbd "C-c C-v") 'restclient-http-send-current-stay-in-window)
+    (define-key map (kbd "C-c C-n") 'restclient-jump-next)
+    (define-key map (kbd "C-c C-p") 'restclient-jump-prev)
+    (define-key map (kbd "C-c C-.") 'restclient-mark-current)
+    (define-key map (kbd "C-c C-u") 'restclient-copy-curl-command)
+    (define-key map (kbd "C-c n n") 'restclient-narrow-to-current)
+    (define-key map (kbd "TAB") 'restclient-toggle-body-visibility)
+    map)
+  "Keymap for restclient-mode.")
+
 ;;;###autoload
 (define-derived-mode restclient-mode fundamental-mode "REST Client"
   "Turn on restclient mode."
-  (local-set-key (kbd "C-c C-c") 'restclient-http-send-current)
-  (local-set-key (kbd "C-c C-r") 'restclient-http-send-current-raw)
-  (local-set-key (kbd "C-c C-v") 'restclient-http-send-current-stay-in-window)
-  (local-set-key (kbd "C-c C-n") 'restclient-jump-next)
-  (local-set-key (kbd "C-c C-p") 'restclient-jump-prev)
-  (local-set-key (kbd "C-c C-.") 'restclient-mark-current)
-  (local-set-key (kbd "C-c C-u") 'restclient-copy-curl-command)
-  (local-set-key (kbd "C-c n n") 'restclient-narrow-to-current)
-  (local-set-key (kbd "TAB") 'restclient-toggle-body-visibility)
   (set (make-local-variable 'comment-start) "# ")
   (set (make-local-variable 'comment-start-skip) "# *")
   (set (make-local-variable 'comment-column) 48)
