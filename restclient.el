@@ -20,6 +20,7 @@
 ;;
 (require 'url)
 (require 'json)
+(require 'outline)
 
 (defgroup restclient nil
   "An interactive HTTP client for Emacs."
@@ -578,6 +579,7 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
     (define-key map (kbd "C-c C-.") 'restclient-mark-current)
     (define-key map (kbd "C-c C-u") 'restclient-copy-curl-command)
     (define-key map (kbd "C-c n n") 'restclient-narrow-to-current)
+    (define-key map (kbd "C-c C-a") 'outline-show-all)
     (define-key map (kbd "TAB") 'restclient-toggle-body-visibility)
     map)
   "Keymap for restclient-mode.")
