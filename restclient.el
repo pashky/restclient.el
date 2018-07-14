@@ -59,6 +59,13 @@
   :group 'restclient
   :type '(alist :key-type string :value-type symbol))
 
+(defcustom restclient-read-encoding-function 'restclient-read-encoding-default
+  "Function to read the encoding from the raw response buffer."
+  :group 'restclient
+  :type '(choice
+          (function-item :tag "Default `restclient' encoding reader" :value restclient-read-encoding-default)
+          (function :tag "Your own function")))
+
 (defgroup restclient-faces nil
   "Faces used in Restclient Mode"
   :group 'restclient
@@ -300,21 +307,30 @@ The buffer contains the raw HTTP response sent by the server."
       (signal (car (plist-get status :error)) (cdr (plist-get status :error)))
     (restclient-restore-header-variables)
     (when (buffer-live-p (current-buffer))
-      (with-current-buffer (restclient-decode-response
-                            (current-buffer)
-                            bufname
-                            restclient-same-buffer-response)
-        (run-hooks 'restclient-response-received-hook)
-        (unless raw
-          (restclient-prettify-response method url))
-        (buffer-enable-undo)
-        (run-hooks 'restclient-response-loaded-hook)
-        (if stay-in-window
-            (display-buffer (current-buffer) t)
-          (switch-to-buffer-other-window (current-buffer)))))))
+      (let ((encoding (restclient-read-encoding (current-buffer))))
+        (with-current-buffer (restclient-decode-response
+                              (current-buffer)
+                              encoding
+                              bufname
+                              restclient-same-buffer-response)
+          (run-hooks 'restclient-response-received-hook)
+          (unless raw
+            (restclient-prettify-response method url))
+          (buffer-enable-undo)
+          (run-hooks 'restclient-response-loaded-hook)
+          (if stay-in-window
+              (display-buffer (current-buffer) t)
+            (switch-to-buffer-other-window (current-buffer))))))))
 
-(defun restclient-decode-response (raw-http-response-buffer target-buffer-name same-name)
-  "Decode the HTTP response using the charset (encoding) specified in the Content-Type header. If no charset is specified, default to UTF-8."
+(defun restclient-read-encoding (buffer)
+  "Invokes the function to read the encoding. The variable `restclient-read-encoding-function' says which function to use."
+  (if (null restclient-read-encoding-function)
+      nil
+    (with-current-buffer buffer
+      (save-excursion (funcall restclient-read-encoding-function)))))
+
+(defun restclient-read-encoding-default ()
+  "Default encoding reader."
   (let* ((charset-regexp "^Content-Type.*charset=\\([-A-Za-z0-9]+\\)")
          (image? (save-excursion
                    (search-forward-regexp "^Content-Type.*[Ii]mage" nil t)))
@@ -322,8 +338,12 @@ The buffer contains the raw HTTP response sent by the server."
                          (search-forward-regexp charset-regexp nil t))
                        (intern (downcase (match-string 1)))
                      'utf-8)))
-    (if image?
-        ;; Dont' attempt to decode. Instead, just switch to the raw HTTP response buffer and
+    (if image? nil encoding)))
+
+(defun restclient-decode-response (raw-http-response-buffer encoding target-buffer-name same-name)
+  "Decode the HTTP response using the specified encoding. If no encoding is given, do not decode."
+    (if (null encoding)
+        ;; Don't attempt to decode. Instead, just switch to the raw HTTP response buffer and
         ;; rename it to target-buffer-name.
         (with-current-buffer raw-http-response-buffer
           ;; We have to kill the target buffer if it exists, or `rename-buffer'
@@ -349,7 +369,7 @@ The buffer contains the raw HTTP response sent by the server."
             (error
              (message (concat "Error when trying to decode http response with encoding: "
                               (symbol-name encoding)))))
-          decoded-http-response-buffer)))))
+          decoded-http-response-buffer))))
 
 (defun restclient-current-min ()
   (save-excursion
@@ -542,7 +562,7 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
         (end-of-line)
         ;; If the overlays at this point have 'invisible set, toggling
         ;; must make the region visible. Else it must hide the region
-        
+
         ;; This part of code is from org-hide-block-toggle method of
         ;; Org mode
         (let ((overlays (overlays-at (point))))
