@@ -308,6 +308,7 @@ The buffer contains the raw HTTP response sent by the server."
         (unless raw
           (restclient-prettify-response method url))
         (buffer-enable-undo)
+	(restclient-response-mode)
         (run-hooks 'restclient-response-loaded-hook)
         (if stay-in-window
             (display-buffer (current-buffer) t)
@@ -594,6 +595,15 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
       :keymap '(("\t" . restclient-toggle-body-visibility-or-indent)
                 ("\C-c\C-a" . restclient-toggle-body-visibility-or-indent))
       :group 'restclient)
+
+(define-minor-mode restclient-response-mode
+  "Minor mode to allow additional keybindings in restclient response buffer."
+  :init-value nil
+  :lighter nil
+  :keymap '(("q" . (lambda ()
+		     (interactive)
+		     (quit-window (get-buffer-window (current-buffer))))))
+  :group 'restclient)
 
 ;;;###autoload
 (define-derived-mode restclient-mode fundamental-mode "REST Client"
