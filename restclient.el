@@ -236,7 +236,8 @@
                                                     (match-string-no-properties 1)
                                                     "/"
                                                     (match-string-no-properties 2))
-                                                   restclient-content-type-modes))))
+                                                   restclient-content-type-modes
+                                                   t))))
                         (forward-line)) 0)))
       (setq end-of-headers (point))
       (while (and (looking-at restclient-empty-line-regexp)
