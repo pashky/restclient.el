@@ -274,7 +274,12 @@
               (insert-image (create-image img nil t))))
 
            ((eq guessed-mode 'js-mode)
-            (let ((json-special-chars (remq (assoc ?/ json-special-chars) json-special-chars)))
+            (let ((json-special-chars (remq (assoc ?/ json-special-chars) json-special-chars))
+		  ;; Emacs 27 json.el uses `replace-buffer-contents' for
+		  ;; pretty-printing which is great because it keeps point and
+		  ;; markers intact but can be very slow with huge minimalized
+		  ;; JSON.  We don't need that here.
+		  (json-pretty-print-max-secs 0))
               (ignore-errors (json-pretty-print-buffer)))
             (restclient-prettify-json-unicode)))
 
