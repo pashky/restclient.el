@@ -186,22 +186,18 @@
     ad-do-it))
 (ad-activate 'url-http-user-agent-string)
 
-(defun restclient-restore-header-variables ()
-  (url-set-mime-charset-string)
-  (setq url-mime-language-string nil)
-  (setq url-mime-encoding-string nil)
-  (setq url-mime-accept-string nil)
-  (setq url-personal-mail-address nil))
-
 (defun restclient-http-do (method url headers entity &rest handle-args)
   "Send ENTITY and HEADERS to URL as a METHOD request."
   (if restclient-log-request
       (message "HTTP %s %s Headers:[%s] Body:[%s]" method url headers entity))
   (let ((url-request-method (encode-coding-string method 'us-ascii))
         (url-request-extra-headers '())
-        (url-request-data (encode-coding-string entity 'utf-8)))
-
-    (restclient-restore-header-variables)
+        (url-request-data (encode-coding-string entity 'utf-8))
+        (url-mime-charset-string (url-mime-charset-string))
+        (url-mime-language-string nil)
+        (url-mime-encoding-string nil)
+        (url-mime-accept-string nil)
+        (url-personal-mail-address nil))
 
     (dolist (header headers)
       (let* ((mapped (assoc-string (downcase (car header))
@@ -304,7 +300,6 @@ The buffer contains the raw HTTP response sent by the server."
   (setq restclient-request-time-end (current-time))
   (if (= (point-min) (point-max))
       (signal (car (plist-get status :error)) (cdr (plist-get status :error)))
-    (restclient-restore-header-variables)
     (when (buffer-live-p (current-buffer))
       (with-current-buffer (restclient-decode-response
                             (current-buffer)
