@@ -30,8 +30,13 @@ Content-Type: application/json
     ]
 }
 
+
 # Content type is loosely matched, could be application/vnd.whatever+json
 GET http://httpbin.org/response-headers?Content-Type=application/vnd.whatever%2Bjson;%20charset=UTF-8
+-> on-response (message "dynamic hook called %s %s"
+(random ) (random ))
+-> on-response (message "another hook")
+
 
 # Content type is loosely matched, could be application/vnd.whatever+json
 GET http://httpbin.org/response-headers?Content-Type=application/something%2Bjson
@@ -123,9 +128,10 @@ POST http://httpbin.org/post
 #
 # Multiline variable referencing another variable
 #
+:my-ip = "123.1.1.1"
 :common-headers = <<
 Authentication: :auth-token
-User-Agent: MyApp/1.0
+User-Agent: MyApp/1.0 | Other app :my-ip
 Content-type: application/json
 #
 # ...and another one
@@ -171,3 +177,21 @@ GET http://httpbin.org/redirect-to?url=http%3A%2F%2Fexample.com%2F
 
 POST http://httpbin.org/post
 Cookie: :cookie
+
+# ================================================================================================
+# dynamic per-request hooks
+
+# multi-line elisp expression called on completion
+GET http://httpbin.org/response-headers?Content-Type=application/vnd.whatever%2Bjson;%20charset=UTF-8
+-> run-hook (message "dynamic hook called %s %s"
+                  (random ) (random ))
+
+# set a variable to the value of your ip address using a jq expression
+GET http://httpbin.org/ip
+-> jq-set-var :my-ip .origin
+
+# multiple elsip hooks on call
+GET http://httpbin.org/response-headers?Content-Type=application/vnd.whatever%2Bjson;%20charset=UTF-8
+-> run-hook (message "hook 1")
+-> run-hook (message "hook 2")
+

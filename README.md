@@ -29,6 +29,7 @@ and supports a few additional keypresses:
 - `C-c n n`: narrow to region of current request (including headers)
 - `TAB`: hide/show current request body, only if 
 - `C-c C-a`: show all collapsed regions
+- `C-c C-i`: show information on resclient variables at point
 
 The last two functions are implemented as `restclient-outline-mode` minor mode, which is activated by default via hook for major mode. Remove this hook using `(remove-hook 'restclient-mode-hook 'restclient-outline-mode)` if you don't wish to have this behaviour, or it clashes with any other binding for `TAB` like autocomplete. 
 
@@ -79,6 +80,9 @@ Query file example:
     #
     DELETE https://jira.atlassian.com/rest/api/2/version/20
 
+    # Set a variable to the value of your ip address using a jq expression
+    GET http://httpbin.org/ip
+    -> jq-set-var :my-ip .origin
 
 Lines starting with `#` are considered comments AND also act as separators.
 
@@ -136,6 +140,16 @@ and the body.
     :my-headers
 
     { "name": ":the-name" }
+
+Varaibles can also be set based on the body of a response using the per-request hooks
+
+    # set a variable :my-ip to the value of your ip address using a jq expression
+    GET http://httpbin.org/ip
+    -> jq-set-var :my-ip .origin
+	
+	# set a variable using elisp evaluated in the result buffer
+	GET http://httpbin.org/headers
+	-> run-hook (restclient-set-var ":my-var" (format "some %s" 'elisp))
 
 # File uploads
 
