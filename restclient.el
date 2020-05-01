@@ -481,6 +481,22 @@ The buffer contains the raw HTTP response sent by the server."
   (restclient-remove-var var-name)
   (setq restclient-var-overrides (cons (cons var-name value) restclient-var-overrides)))
 
+(defun restclient-get-var-at-point (var-name buffer-name buffer-pos)
+  (message (format "getting var %s form %s at %s" var-name buffer-name buffer-pos))
+  (let* ((vars-at-point  (save-excursion
+			   (switch-to-buffer buffer-name)
+			   (goto-char buffer-pos)
+			   ;; if we're called from a restclient buffer we need to lookup vars before the current hook or evar
+			   ;; outside a restclient buffer only globals are available so moving the point wont matter
+			   (re-search-backward "^:\\|->" (point-min) t)
+			   (restclient-find-vars-before-point))))
+    (restclient-replace-all-in-string vars-at-point (cdr (assoc var-name vars-at-point)))))
+
+(defmacro restclient-get-var (var-name)
+  (lexical-let ((buf-name (buffer-name (current-buffer)))
+		(buf-point (point)))
+    `(restclient-get-var-at-point ,var-name ,buf-name ,buf-point)))
+
 (defun restclient-single-request-function ()
   (dolist (f restclient-curr-request-functions)
     (ignore-errors
@@ -501,7 +517,7 @@ The buffer contains the raw HTTP response sent by the server."
         (while (cond
 		((looking-at restclient-response-hook-regexp)
 		 (when-let (hook-function (restclient-parse-hook (match-string-no-properties 2)
-								 (match-end 1)
+								 (match-end 2)
 								 (match-string-no-properties 3)))
 		   (push hook-function restclient-curr-request-functions)))
                 ((and (looking-at restclient-header-regexp) (not (looking-at restclient-empty-line-regexp)))
@@ -542,13 +558,13 @@ The buffer contains the raw HTTP response sent by the server."
 
 (defun restclient-elisp-result-function (args offset)
   (goto-char offset)
-  (lexical-let ((form (read (current-buffer))))
+  (lexical-let ((form (macroexpand-all (read (current-buffer)))))
     (lambda ()
       (eval form))))
 
 (resetclient-register-result-func
  "run-hook" #'restclient-elisp-result-function
- "Call the provided (possioly multi-line) elisp when the result 
+ "Call the provided (possibly multi-line) elisp when the result 
   buffer is formatted. Equivalent to a restclient-response-loaded-hook 
   that only runs for this request.
   eg. -> on-response (message \"my hook called\")" )

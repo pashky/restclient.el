@@ -195,3 +195,12 @@ GET http://httpbin.org/response-headers?Content-Type=application/vnd.whatever%2B
 -> run-hook (message "hook 1")
 -> run-hook (message "hook 2")
 
+# set basic auth from vars & referencing vars in hooks
+:user = jack
+:password = secret
+:test-me := (format "%s:%s" ":user" ":password")
+:auth-token :=  (format "Basic %s" (base64-encode-string (restclient-get-var ":test-me")))
+
+GET http://httpbin.org/basic-auth/jack/secret
+Authorization: :auth-token
+-> run-hook (message (format "authenticated with '%s'" (restclient-get-var ":auth-token")))
