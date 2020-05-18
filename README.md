@@ -66,7 +66,7 @@ Query file example:
     Content-Type: application/json
 
     {
-            "jql": "project = HSP",
+            "jql": "project = HCPUB",
             "startAt": 0,
             "maxResults": 15,
             "fields": [
