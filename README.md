@@ -143,13 +143,13 @@ and the body.
 
 Varaibles can also be set based on the body of a response using the per-request hooks
 
-    # set a variable :my-ip to the value of your ip address using a jq expression
+    # set a variable :my-ip to the value of your ip address using elisp evaluated in the result buffer
     GET http://httpbin.org/ip
-    -> jq-set-var :my-ip .origin
-	
-	# set a variable using elisp evaluated in the result buffer
-	GET http://httpbin.org/headers
-	-> run-hook (restclient-set-var ":my-var" (format "some %s" 'elisp))
+    -> run-hook (restclient-set-var ":my-ip" (cdr (assq 'origin (json-read))))
+    
+    # set a variable :my-var using a more complex jq expression (requires jq-mode)
+    GET https://httpbin.org/json
+    -> jq-set-var :my-var .slideshow.slides[0].title
 
 # File uploads
 
