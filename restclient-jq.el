@@ -73,3 +73,5 @@
        takes var & jq expression as args. 
        eg. -> jq-set-var :my-token .token")
      (define-key restclient-response-mode-map  (kbd "C-c C-j") #'restclient-jq-interactive-result)))
+
+;;; restclient-jq.el ends here
