@@ -470,7 +470,7 @@ The buffer contains the raw HTTP response sent by the server."
     `(lambda ()
        (message "Unknown restclient hook type %s" ,cb-type))))
 
-(defun resetclient-register-result-func (name creation-func description)
+(defun restclient-register-result-func (name creation-func description)
   (let ((new-cell (cons name (cons creation-func description))))
     (setq restclient-result-handlers (cons new-cell restclient-result-handlers))))
 
