@@ -1,4 +1,4 @@
-;;; restclient-jq.el --- Support for setting resetclient vars from jq expressions
+;;; restclient-jq.el --- Support for setting restclient vars from jq expressions
 ;;
 ;; Public domain.
 
