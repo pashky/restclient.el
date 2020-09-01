@@ -18,7 +18,7 @@
 ;;; Code:
 ;;
 (require 'jq-mode)
-
+(eval-when-compile (require 'cl-lib)) ;; lexical-let
 
 ;; --- jq support
 (defun restclient-result-end-point ()
@@ -43,7 +43,7 @@
          (format "%s %s %s"
                  jq-interactive-command
 		 "-r"
-                 (shell-quote-argument jq-pattern))))      
+                 (shell-quote-argument jq-pattern))))
       (string-trim (buffer-string)))))
 
 (defun restclient-json-var-function (args args-offset)
@@ -67,9 +67,13 @@
 
 (eval-after-load 'restclient
   '(progn
-     (resetclient-register-result-func
+     (restclient-register-result-func
       "jq-set-var" #'restclient-json-var-function
-      "Set a resetclient variable with the value jq expression, 
-       takes var & jq expression as args. 
+      "Set a restclient variable with the value jq expression,
+       takes var & jq expression as args.
        eg. -> jq-set-var :my-token .token")
      (define-key restclient-response-mode-map  (kbd "C-c C-j") #'restclient-jq-interactive-result)))
+
+(provide 'restclient-jq)
+
+;;; restclient-jq.el ends here
