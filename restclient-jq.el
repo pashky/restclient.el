@@ -60,7 +60,7 @@
 
 (defun restclient-jq-interactive-result ()
   (interactive)
-  (flush-lines "^//.*") ;; jq doesnt like comments
+  (flush-lines "^//.*") ;; jq doesn't like comments
   (jq-interactively (point-min) (restclient-jq-result-end-point)))
 
 
