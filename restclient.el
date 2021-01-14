@@ -171,7 +171,7 @@
 (defconst restclient-empty-line-regexp "^\\s-*$")
 
 (defconst restclient-method-url-regexp
-  "^\\(GET\\|POST\\|DELETE\\|PUT\\|HEAD\\|OPTIONS\\|PATCH\\) \\(.*\\)$")
+  "^[[:blank:]]*\\(GET\\|POST\\|DELETE\\|PUT\\|HEAD\\|OPTIONS\\|PATCH\\) \\(.*\\)$")
 
 (defconst restclient-header-regexp
   "^\\([^](),/:;@[\\{}= \t]+\\): \\(.*\\)$")
