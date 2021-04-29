@@ -154,6 +154,12 @@ Varaibles can also be set based on the body of a response using the per-request 
     # set a variable :my-var using a more complex jq expression (requires jq-mode)
     GET https://httpbin.org/json
     -> jq-set-var :my-var .slideshow.slides[0].title
+    
+    # hooks come before the body on POST
+    POST http://httpbin.org/post
+    -> jq-set-var :test .json.test
+
+    {"test": "foo"}
 
 # File uploads
 
