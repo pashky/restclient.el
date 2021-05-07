@@ -6,6 +6,7 @@
 ;; Maintainer: Pavel Kurnosov <pashky@gmail.com>
 ;; Created: 01 Apr 2012
 ;; Keywords: http
+;; Package-Requires: ((cl-lib "0.5"))
 
 ;; This file is not part of GNU Emacs.
 ;; This file is public domain software. Do what you want.
@@ -21,6 +22,7 @@
 (require 'url)
 (require 'json)
 (require 'outline)
+(require 'cl-lib)
 
 (defgroup restclient nil
   "An interactive HTTP client for Emacs."
