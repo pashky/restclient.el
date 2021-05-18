@@ -3,6 +3,7 @@
 ;; Public domain.
 
 ;; Author: Pavel Kurnosov <pashky@gmail.com>
+;; Homepage: https://github.com/pashky/restclient.el
 ;; Maintainer: Pavel Kurnosov <pashky@gmail.com>
 ;; Created: 01 Apr 2012
 ;; Keywords: http
