@@ -26,7 +26,6 @@
   (when (version< emacs-version "26")
     (require 'cl)))
 
-
 (eval-when-compile (require 'cl-lib))
 
 (defgroup restclient nil
