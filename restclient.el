@@ -24,7 +24,6 @@
 (eval-when-compile (require 'subr-x))
 (eval-when-compile
   (when (version< emacs-version "26")
-      ;; Using `cl-defstruct' needs `cl' on older Emacsen. See issue
     (require 'cl)))
 
 
