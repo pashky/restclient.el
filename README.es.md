@@ -7,6 +7,10 @@ los resultados como XML, JSON formateados e incluso imágenes.
 
 ![](http://i.imgur.com/QtCID.png)
 
+Lee esta documentación en otros idiomas: [English][]
+
+[English]: README.md "English"
+
 # Uso
 
 Puedes instalar fácilmente `restclient` desde

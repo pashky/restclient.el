@@ -6,6 +6,10 @@ displays results as a pretty-printed XML, JSON and even images.
 
 ![](http://i.imgur.com/QtCID.png)
 
+Read this documentation on other languages: [Español][]
+
+[Español]: README.es.md "Español"
+
 # Usage
 
 You can easily install `restclient` using `package.el` from [MELPA](http://melpa.org/).
