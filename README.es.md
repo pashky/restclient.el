@@ -12,16 +12,16 @@ los resultados como XML, JSON formateados e incluso imágenes.
 Puedes instalar fácilmente `restclient` desde
 [MELPA](http://melpa.org/) `package.el`.
 
-Alternativamente, puesde colocar `restclient.el` donde tengas normalmente
+Alternativamente, puedes poner `restclient.el` donde tengas normalmente
 tus ficheros lisp y añadir `(require restclient)` en tu fichero de inicio de
 Emacs.
 
 Una vez instalado, puedes preparar el fichero de texto con las peticiones.
 
 `restclient-mode` es un modo mayor que resalta ligeramente la sintaxis y
-soporta algunos atajos de teclado tradicionales.
+soporta algunos de los atajos de teclado tradicionales.
 
-- `C-c C-c`: Ejecuta la petición en la que se encuentra el cursor.
+- `C-c C-c`: ejecuta la petición en la que se encuentra el cursor
 Formatea la respuesta cuando es posible
 - `C-c C-r`: lo mismo pero sin modificar la respuesta
 - `C-c C-v`: lo mismo que `C-c C-c`, pero no cambia el foco a otra ventana
@@ -37,8 +37,9 @@ por supuesto)
 - `C-c C-a`: muestra todas las partes contraídas
 - `C-c C-i`: muestra información sobre las variables de restclient en el punto
 
-Las dos últimas funciones están implementadas como `restclient-outline-mode`
-modo menor, el cual está activado por omisión como hook del modo mayor.
+Las dos últimas funciones están implementadas en el modo menor
+`restclient-outline-mode` el cual está activado por omisión como hook del
+modo mayor.
 Elimina este hook con `(remove-hook 'restclient-mode-hook
 'restclient-outline-mode)` en el caso que no quieras este comportamiento
 o si colisiona con otro atajo de teclado para `TAB` como auto completar.
@@ -115,7 +116,7 @@ O así:
     :myvar := (some (artbitrary 'elisp)
 
 De la segunda forma, el valor d la variable es evaluado como
-Emacs Lisp inmediatamente. La evaluación de las variables es arriba a bajo.
+Emacs Lisp inmediatamente. La evaluación de las variables es de arriba a bajo.
 Solo una expresión de una línea es permitida por variable, por lo que utiliza
 `(progn ...)` y envolvente virtual de línea en caso de necesitar más variables
 por línea. No hay forma de referenciar variables _restclient_ declaradas
@@ -138,13 +139,13 @@ o
 
 `<<` se utiliza para identificar el inicio de un valor multi-línea,
 empezando el valor en la siguiente línea. El final del valor de la variable
-es el carácter de comentario `#` y el ultimo final de línea no cuenta, como en
+es el carácter de comentario `#` y el último final de línea no cuenta, como en
 el cuerpo de las peticiones.
 
 Una vez declarada la variable, la puedes usar en la URL, valores de la
 cabecera y el cuerpo.
 
-    # Some generic vars
+    # Algunas variables genéricas
 
     :my-auth = 319854857345898457457
     :my-headers = <<
@@ -153,7 +154,7 @@ cabecera y el cuerpo.
     User-Agent: SomeApp/1.0
     #
 
-    # Update a user's name
+    # Actualiza el nombre de usuario
 
     :user-id = 7
     :the-name := (format "%s %s %d" 'Neo (md5 "The Chosen") (+ 100 1))
@@ -204,8 +205,8 @@ expresión compleja elisp que se evalúe a un valor simple.
 - Aunque la misma variable no se puede usar en la cabecera y en el cuerpo,
 tiene que ser dividida en dos y separadas por una línea en blanco como
 es habitual.
-- Variables ahora pueden referenciarse entre ellas, ya que la sustitución
-ocurre en varias fases y se detiene cuando no no hay más variables.
+- Ahora se pueden referenciar variables entre ellas, ya que la sustitución
+ocurre en varias fases y se detiene cuando no hay más variables.
 Por favor, evita referencias circulares. Aunque hay un límite de seguridad
 configurable que por omisión tiene 10 fases máximo para evitar cuelgues por
 este motivo, hará que el proceso sea más lento.
@@ -245,7 +246,7 @@ Si nil, genera un buffer con el nombre en función del tipo de petición y url
 y un índice incremental por cada petición sucesiva.
 
 Por ejemplo, `GET http://example.org` resultará en los siguientes nombres de
-buffer en 3 peticiones consecutivas:
+buffer tras 3 peticiones consecutivas:
 - `*HTTP GET http://example.org*`
 - `*HTTP GET http://example.org*<2>`
 - `*HTTP GET http://example.org*<3>`
@@ -297,7 +298,7 @@ auto-completado para métodos HTTP y cabeceras en restclient-mode. La fuente
 del completado es ofrecida por know-your-http-well.
 - [ob-restclient](https://github.com/alf/ob-restclient.el): Extensión de
 restclient.el para emacs que ofrece soporte para org-babel.
-- [restclient.vim](https://github.com/bounceme/restclient.vim): ¡Restclienten
+- [restclient.vim](https://github.com/bounceme/restclient.vim): ¡Restclient en
 vim! Muestra las respuestas en el paginador interno de vim.
 
 # Licencia
