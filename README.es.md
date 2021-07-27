@@ -1,6 +1,6 @@
 # restclient.el
 
-Esta es una herramienta para explorar y probar manualmente servicios web 
+Esta es una herramienta para explorar y probar manualmente servicios web
 HTTP REST.
 Ejecuta peticiones desde un documento de peticiones en texto plano, muestra
 los resultados como XML, JSON formateados e incluso imágenes.
@@ -11,7 +11,7 @@ los resultados como XML, JSON formateados e incluso imágenes.
 
 Puedes instalar fácilmente `restclient` desde  [MELPA](http://melpa.org/) `package.el`.
 
-Alternativamente, puesde colocar `restclient.el` donde tengas normalmente 
+Alternativamente, puesde colocar `restclient.el` donde tengas normalmente
 tus ficheros lisp y añadir `(require restclient)` en tu fichero de inicio de Emacs.
 
 Una vez instalado, puedes preparar el fichero de texto con las peticiones.
@@ -130,7 +130,7 @@ Una vez declarada la variable, la puedes usar en la URL, valores de la cabecera 
     Content-Type: application/json
     User-Agent: SomeApp/1.0
     #
-    
+
     # Update a user's name
 
     :user-id = 7
@@ -146,15 +146,15 @@ Las variables pueden también ser establecidas en el cuerpo de la respuesta util
     # establece la variable :my-ip con el valor de tu dirección ip evaluando elisp en el buffer del resultado
     GET http://httpbin.org/ip
     -> run-hook (restclient-set-var ":my-ip" (cdr (assq 'origin (json-read))))
-    
+
     # igual con jq si está instalado
-    GET http://httpbin.org/ip 
+    GET http://httpbin.org/ip
     -> jq-set-var :my-ip .origin
-    
+
     # establece la variable :my-var utilizando una expresión jq más compleja (requiere jq-mode)
     GET https://httpbin.org/json
     -> jq-set-var :my-var .slideshow.slides[0].title
-    
+
     # los hooks se establecen antes del body en POST
     POST http://httpbin.org/post
     -> jq-set-var :test .json.test
@@ -169,7 +169,7 @@ Restclient ahora permite especificar la ruta del fichero para usar como cuerpo, 
     Content-type: text/plain
 
     < /etc/passwd
-    
+
 ### A tener en cuenta:
 
 - Variables multi-linea pueden utilizarse en la cabecera o en el cuerpo. En la URL también pero no tiene mucho sentido a no ser que se trate de una expresión compleja elisp que se evalúe a un valor simple.
