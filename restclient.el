@@ -512,7 +512,7 @@ The buffer contains the raw HTTP response sent by the server."
     (goto-char (restclient-current-min))
     (when (re-search-forward restclient-method-url-regexp (point-max) t)
       (let ((method (match-string-no-properties 1))
-            (url (match-string-no-properties 2))
+            (url (string-trim (match-string-no-properties 2)))
             (vars (restclient-find-vars-before-point))
             (headers '()))
         (forward-line)
