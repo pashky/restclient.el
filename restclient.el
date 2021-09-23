@@ -66,6 +66,11 @@
   :group 'restclient
   :type '(alist :key-type string :value-type symbol))
 
+(defcustom restclient-response-body-only nil
+  "When parsing response, only return its body."
+  :group 'restclient
+  :type 'boolean)
+
 (defgroup restclient-faces nil
   "Faces used in Restclient Mode"
   :group 'restclient
@@ -318,11 +323,12 @@
 
           (goto-char (point-max))
           (or (eq (point) (point-min)) (insert "\n"))
-          (let ((hstart (point)))
-            (insert method " " url "\n" headers)
-            (insert (format "Request duration: %fs\n" (float-time (time-subtract restclient-request-time-end restclient-request-time-start))))
-            (unless (member guessed-mode '(image-mode text-mode))
-              (comment-region hstart (point)))))))))
+	  (unless restclient-response-body-only
+            (let ((hstart (point)))
+              (insert method " " url "\n" headers)
+              (insert (format "Request duration: %fs\n" (float-time (time-subtract restclient-request-time-end restclient-request-time-start))))
+              (unless (member guessed-mode '(image-mode text-mode))
+		(comment-region hstart (point))))))))))
 
 (defun restclient-prettify-json-unicode ()
   (save-excursion
