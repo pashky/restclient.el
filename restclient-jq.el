@@ -1,4 +1,4 @@
-;;; restclient-jq.el --- Support for setting restclient vars from jq expressions
+;;; restclient-jq.el --- Support for setting restclient vars from jq expressions -*- lexical-binding: t; -*-
 ;;
 ;; Public domain.
 
@@ -19,7 +19,6 @@
 ;;; Code:
 ;;
 (require 'jq-mode)
-(eval-when-compile (require 'cl-lib)) ;; lexical-let
 
 ;; --- jq support
 (defun restclient-jq-result-end-point ()
@@ -49,14 +48,14 @@
 
 (defun restclient-jq-json-var-function (args args-offset)
   (save-match-data
-   (and (string-match "\\(:[^: \n]+\\) \\(.*\\)$" args)
-	(lexical-let ((var-name (match-string 1 args))
-		      (jq-patt (match-string 2 args)))
-	  (lambda ()
-	    (let ((resp-val (restclient-jq-get-var jq-patt)))
-	      (restclient-remove-var var-name)
-	      (restclient-set-var var-name resp-val)
-	      (message "restclient var [%s = \"%s\"] " var-name resp-val)))))))
+    (and (string-match "\\(:[^: \n]+\\) \\(.*\\)$" args)
+         (let ((var-name (match-string 1 args))
+               (jq-patt (match-string 2 args)))
+           (lambda ()
+             (let ((resp-val (restclient-jq-get-var jq-patt)))
+               (restclient-remove-var var-name)
+               (restclient-set-var var-name resp-val)
+               (message "restclient var [%s = \"%s\"] " var-name resp-val)))))))
 
 (defun restclient-jq-interactive-result ()
   (interactive)
