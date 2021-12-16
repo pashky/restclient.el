@@ -204,3 +204,11 @@ GET http://httpbin.org/response-headers?Content-Type=application/vnd.whatever%2B
 GET http://httpbin.org/basic-auth/jack/secret
 Authorization: :auth-token
 -> run-hook (message (format "authenticated with '%s'" (restclient-get-var ":auth-token")))
+
+# saving header like csrf token for future usage
+GET http://some.api/csrf_token
+-> run-hook (restclient-set-var-from-header ":csrftoken" "X-CSRF-Token")
+
+# use save header
+POST http://some.api/restricted
+X-CSRF-Token: :csrftoken

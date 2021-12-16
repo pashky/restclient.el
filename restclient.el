@@ -490,6 +490,17 @@ The buffer contains the raw HTTP response sent by the server."
             start (match-end 0)))
     headers))
 
+(defun restclient-get-response-headers ()
+  "Returns alist of current response headers. Works *only* with with
+hook called from `restclient-http-send-current-raw', usually
+bound to C-c C-r."
+  (let ((start (point-min))
+         (headers-end (+ 1 (string-match "\n\n" (buffer-substring-no-properties (point-min) (point-max))))))
+         (restclient-parse-headers (buffer-substring-no-properties start headers-end))))
+
+(defun restclient-set-var-from-header (var header)
+  (restclient-set-var var (cdr (assoc header (restclient-get-response-headers)))))
+
 (defun restclient-read-file (path)
   (with-temp-buffer
     (insert-file-contents path)
