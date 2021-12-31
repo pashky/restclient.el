@@ -23,10 +23,9 @@
 (require 'outline)
 (eval-when-compile (require 'subr-x))
 (eval-when-compile
-  (when (version< emacs-version "26")
-    (require 'cl)))
-
-(eval-when-compile (require 'cl-lib))
+  (if (version< emacs-version "26")
+      (require 'cl)
+    (require 'cl-lib)))
 
 (defgroup restclient nil
   "An interactive HTTP client for Emacs."
