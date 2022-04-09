@@ -46,7 +46,7 @@
                  (shell-quote-argument jq-pattern))))
       (string-trim (buffer-string)))))
 
-(defun restclient-jq-json-var-function (args args-offset)
+(defun restclient-jq-json-var-function (args _args-offset)
   (save-match-data
     (and (string-match "\\(:[^: \n]+\\) \\(.*\\)$" args)
          (let ((var-name (match-string 1 args))
