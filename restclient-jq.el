@@ -6,7 +6,8 @@
 ;; Author: Cameron Dorrat <cdorrat@gmail.com>
 ;; Maintainer: Cameron Dorrat <cdorrat@gmail.com>
 ;; Created: 26 Apr 2020
-;; Keywords: http jq
+;; Keywords: tools comm http jq
+;; Version: 0.1
 ;; Package-Requires: ((restclient "20200502.831") (jq-mode "0.4.1") (emacs "24.4"))
 
 ;; This file is not part of GNU Emacs.
