@@ -22,6 +22,7 @@
 
 ;; --- jq support
 (defun restclient-jq-result-end-point ()
+  "Find the end of a restclient JSON response body."
   (save-excursion
     (goto-char (point-max))
     (or (and (re-search-backward "^[^/].*" nil t)
@@ -29,6 +30,8 @@
 	(point-max))))
 
 (defun restclient-jq-get-var (jq-pattern)
+  "Find value matching the JQ-PATTERN in a restclient JSON response."
+
   (with-temp-buffer
     (let ((output (current-buffer)))
       (with-current-buffer restclient-same-buffer-response-name
@@ -47,6 +50,9 @@
       (string-trim (buffer-string)))))
 
 (defun restclient-jq-json-var-function (args _args-offset)
+  "A restclient result func for setting variables from a JSON response.
+
+ARGS contains the variable name and a jq pattern to use."
   (save-match-data
     (and (string-match "\\(:[^: \n]+\\) \\(.*\\)$" args)
          (let ((var-name (match-string 1 args))
@@ -58,6 +64,7 @@
                (message "restclient var [%s = \"%s\"] " var-name resp-val)))))))
 
 (defun restclient-jq-interactive-result ()
+  "Run jq interactively on a restclient JSON response buffer."
   (interactive)
   (flush-lines "^//.*") ;; jq doesnt like comments
   (jq-interactively (point-min) (restclient-jq-result-end-point)))
