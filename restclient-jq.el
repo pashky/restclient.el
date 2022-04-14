@@ -19,6 +19,7 @@
 
 ;;; Code:
 ;;
+(require 'restclient)
 (require 'jq-mode)
 
 ;; --- jq support
@@ -70,19 +71,12 @@ ARGS contains the variable name and a jq pattern to use."
   (flush-lines "^//.*") ;; jq doesnt like comments
   (jq-interactively (point-min) (restclient-jq-result-end-point)))
 
-
-(provide 'restclient-jq)
-
-;; todo: eval-after-load should be used in configuration, not
-;; packages. Replace with a better solution.
-(eval-after-load 'restclient
-  '(progn
-     (restclient-register-result-func
-      "jq-set-var" #'restclient-jq-json-var-function
-      "Set a restclient variable with the value jq expression,
-       takes var & jq expression as args.
-       eg. -> jq-set-var :my-token .token")
-     (define-key restclient-response-mode-map  (kbd "C-c C-j") #'restclient-jq-interactive-result)))
+(restclient-register-result-func
+ "jq-set-var" #'restclient-jq-json-var-function
+ "Set a restclient variable with the value jq expression,
+takes var & jq expression as args.
+eg. -> jq-set-var :my-token .token")
+(define-key restclient-response-mode-map  (kbd "C-c C-j") #'restclient-jq-interactive-result)
 
 (provide 'restclient-jq)
 
