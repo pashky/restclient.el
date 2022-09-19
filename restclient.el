@@ -74,6 +74,11 @@
   :group 'restclient
   :type 'boolean)
 
+(defcustom restclient-cloak-vars-at-startup nil
+  "Cloak variables at startup, it will replace their display values with *."
+  :group 'restclient
+  :type 'boolean)
+
 (defgroup restclient-faces nil
   "Faces used in Restclient Mode"
   :group 'restclient
@@ -450,6 +455,38 @@ The buffer contains the raw HTTP response sent by the server."
           (setq vars (cons (cons name (if should-eval (restclient-eval-var value) value)) vars))))
       (append restclient-var-overrides vars))))
 
+(defun restclient-toggle-cloak ()
+  "Toggle cloak variables."
+  (interactive)
+  (restclient--run-cloak-in-buffer (not (restclient--has-display-property))))
+
+(defun restclient-cloak-at-startup ()
+  "Cloak variables at startup depending of `restclient-cloak-vars-at-startup' flag."
+  (interactive)
+  (when restclient-cloak-vars-at-startup
+    (restclient--run-cloak-in-buffer t)))
+
+(defun restclient--has-display-property ()
+  "Check if any text in the buffer has a display property."
+  (save-excursion
+    (goto-char (point-min))
+    (text-property-search-forward 'display)))
+
+(defun restclient--run-cloak-in-buffer (flag)
+  "Run cloaking using FLAG in current buffer."
+  (save-excursion
+    (goto-char (point-min))
+    (while (search-forward-regexp restclient-var-regexp (point-max) t)
+      (if (match-string 3)
+          (restclient--cloak-text (match-beginning 3) (match-end 3) flag)))))
+
+(defun restclient--cloak-text (start end cloak)
+  "Cloak text between START and END and replace it with *.
+if CLOAK is nil cloaking property will be removed."
+  (if cloak
+      (put-text-property start end 'display (make-string (length (buffer-substring start end)) ?*))
+    (remove-text-properties start end '(display))))
+
 (defun restclient-eval-var (string)
   (with-output-to-string (princ (eval (read string)))))
 
@@ -785,6 +822,7 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
   (add-to-invisibility-spec '(outline . t)))
 
 (add-hook 'restclient-mode-hook 'restclient-outline-mode)
+(add-hook 'restclient-mode-hook 'restclient-cloak-at-startup)
 
 (provide 'restclient)
 
