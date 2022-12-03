@@ -218,6 +218,14 @@ __Default: nil__
 
 Inhibit restclient from sending cookies implicitly.
 
+### restclient-response-size-threshold
+
+__Default: 100000__
+
+Size of the response buffer restclient can display without huge performance dropdown.
+If response buffer will be more than that, only bare major mode will be used to display it.
+Set to `nil` to disable threshold completely.
+
 # Known issues
 
 - Comment lines `#` act as end of entity. Yes, that means you can't post shell script or anything with hashes as PUT/POST entity. I'm fine with this right now,
