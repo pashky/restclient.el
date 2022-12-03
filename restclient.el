@@ -46,6 +46,14 @@
   :group 'restclient
   :type 'string)
 
+(defcustom restclient-response-size-threshold 100000
+  "Size of the response restclient can display without performance impact."
+  :group 'restclient
+  :type 'integer)
+
+(defvar restclient-threshold-multiplier 10
+  "In how many times size-threshold should be exceed to use fundamental mode.")
+
 (defcustom restclient-info-buffer-name "*Restclient Info*"
   "Name for info buffer."
   :group 'restclient
@@ -295,7 +303,23 @@
         (when guessed-mode
           (delete-region start (point))
           (unless (eq guessed-mode 'image-mode)
-            (apply guessed-mode '())
+            (cond ((and restclient-response-size-threshold
+                        (> (buffer-size) (* restclient-response-size-threshold
+                                            restclient-threshold-multiplier)))
+                   (fundamental-mode)
+                   (setq comment-start (let ((guessed-mode guessed-mode))
+                                         (with-temp-buffer
+                                           (apply  guessed-mode '())
+                                           comment-start)))
+                   (message
+                    "Response is too huge, using fundamental-mode to display it!"))
+                  ((and restclient-response-size-threshold
+                        (> (buffer-size) restclient-response-size-threshold))
+                   (delay-mode-hooks (apply guessed-mode '()))
+                   (message
+                    "Response is too big, using bare %s to display it!" guessed-mode))
+                  (t
+                   (apply guessed-mode '())))
             (if (fboundp 'font-lock-flush)
                 (font-lock-flush)
               (with-no-warnings
