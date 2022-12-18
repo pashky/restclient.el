@@ -83,6 +83,13 @@ Cookie: name=restclient
 GET http://httpbin.org/basic-auth/user/password
 Authorization: :example-auth
 
+# HTTPBasic Auth with Variables
+:username  = user
+:password  = password
+:basicauth := (format "Basic %s" (base64-encode-string (format "%s:%s" ":username" ":password")))
+GET http://httpbin.org/basic-auth/user/password
+Authorization: :basicauth
+
 # Returns some XML
 GET http://httpbin.org/xml
 
