@@ -68,7 +68,7 @@ ARGS contains the variable name and a jq pattern to use."
 (defun restclient-jq-interactive-result ()
   "Run jq interactively on a restclient JSON response buffer."
   (interactive)
-  (flush-lines "^//.*") ;; jq doesnt like comments
+  (flush-lines "^//.*") ;; jq doesn't like comments
   (jq-interactively (point-min) (restclient-jq-result-end-point)))
 
 (restclient-register-result-func
