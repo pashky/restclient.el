@@ -506,10 +506,16 @@ bound to C-c C-r."
     (insert-file-contents path)
     (buffer-string)))
 
+(defun restclient-replace-path-with-contents (entity)
+  (replace-regexp-in-string
+   restclient-file-regexp
+   (lambda (match)
+     (string-match restclient-file-regexp match)
+     (restclient-read-file (match-string 1 match)))
+   entity))
+
 (defun restclient-parse-body (entity vars)
-  (if (= 0 (or (string-match restclient-file-regexp entity) 1))
-      (restclient-read-file (match-string 1 entity))
-    (restclient-replace-all-in-string vars entity)))
+  (restclient-replace-path-with-contents (restclient-replace-all-in-string vars entity)))
 
 (defun restclient-parse-hook (cb-type args-offset args)
   (if-let ((handler (assoc cb-type restclient-result-handlers)))
