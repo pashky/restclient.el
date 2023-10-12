@@ -577,7 +577,7 @@ bound to C-c C-r."
 	(when restclient-curr-request-functions
 	  (add-hook 'restclient-response-loaded-hook 'restclient-single-request-function))
         (let* ((cmax (restclient-current-max))
-               (entity (restclient-parse-body (buffer-substring (min (point) cmax) cmax) vars))
+               (entity (restclient-parse-body (restclient-replace-all-in-string vars (buffer-substring (min (point) cmax) cmax)) vars))
                (url (restclient-replace-all-in-string vars url)))
           (apply func method url headers entity args))))))
 
@@ -747,7 +747,7 @@ Optional argument STAY-IN-WINDOW do not move focus to response buffer if t."
         (end-of-line)
         ;; If the overlays at this point have 'invisible set, toggling
         ;; must make the region visible. Else it must hide the region
-        
+
         ;; This part of code is from org-hide-block-toggle method of
         ;; Org mode
         (let ((overlays (overlays-at (point))))
