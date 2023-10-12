@@ -99,7 +99,7 @@ You declare a variable like this:
 
 or like this:
 
-    :myvar := (some (artbitrary 'elisp)
+    :myvar := (some (artbitrary 'elisp))
 
 In second form, the value of variable is evaluated as Emacs Lisp form immediately. Evaluation of variables is done from top to bottom. Only one one-line form for each variable is allowed, so use `(progn ...)` and some virtual line wrap mode if you need more. There's no way to reference earlier declared _restclient_ variables, but you can always use `setq` to save state.
 
