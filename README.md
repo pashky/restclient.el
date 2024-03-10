@@ -142,7 +142,7 @@ and the body.
 
     { "name": ":the-name" }
 
-Varaibles can also be set based on the body of a response using the per-request hooks
+Variables can also be set based on the body of a response using the per-request hooks
 
     # set a variable :my-ip to the value of your ip address using elisp evaluated in the result buffer
     GET http://httpbin.org/ip
